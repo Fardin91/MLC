@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Animation editor for Matrix Light Control.">
+    <title>Create Animations | Matrix Light Control</title>
+
+    <link rel="icon" type="image/gif" href="data:,">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="styles/styles.css">
+    <link rel="stylesheet" href="styles/createAni.css">
+</head>
+
+<body>
+    <header class="page-header">
+        <a class="home-link" href="index.html">Matrix Light Control</a>
+    </header>
+
+    <main class="create-page">
+        <section class="create-layout create-layout-editor">
+            <section class="editor-top">
+                <div class="editor-summary" id="editorSummary">
+                    <div class="summary-item">
+                        <span class="summary-label">Name</span>
+                        <span class="summary-value" id="summaryName">Not set</span>
+                    </div>
+                </div>
+                <div class="toolbox flex-row">
+                    <button class="btn-edit eraseCell" type="button" data-mode="erase" aria-label="Erase mode">
+                        <img src="images/eraser.png" alt="Erase">
+                    </button>
+
+                    <button class="btn-edit editCell" type="button" data-mode="draw" aria-label="Draw mode">
+                        <img src="images/pencil.png" alt="Draw">
+                    </button>
+
+                    <button class="btn-edit fillCell" type="button" data-mode="fill" aria-label="Fill mode">
+                        <img src="images/fill.png" alt="Fill">
+                    </button>
+
+                    <div class="cp-container">
+                        <input class="color-picker" type="color" aria-label="Choose drawing color">
+                    </div>
+                </div>
+                <button class="upload-btn" type="button" id="uploadAnimationBtn">Upload</button>
+            </section>
+
+            <section class="matrixCreator-container">
+
+                <div class="matrix-panel">
+                    <div class="matrix-container">
+                        <div class="matrix-stage-inner">
+                            <div class="matrix-main-row">
+                                <div class="frame-preview" id="prevFramePreview">
+                                    <div class="frame-preview-label" id="prevFrameLabel">-</div>
+                                    <div class="frame-preview-grid" id="prevFrameGrid"></div>
+                                </div>
+                                <div class="matrix-current-column">
+                                    <span class="matrix-frame-status" id="matrixFrameStatus">1/1</span>
+                                    <div class="matrix-current-row">
+                                        <button class="frame-nav" type="button" aria-label="Previous frame"
+                                            id="framePrev">&lt;</button>
+                                        <div class="matrix-wrapper">
+                                            <div class="matrix-grid"></div>
+                                        </div>
+                                        <button class="frame-nav" type="button" aria-label="Next frame"
+                                            id="frameNext">&gt;</button>
+                                    </div>
+                                </div>
+                                <div class="frame-preview" id="nextFramePreview">
+                                    <div class="frame-preview-label" id="nextFrameLabel">-</div>
+                                    <div class="frame-preview-grid" id="nextFrameGrid"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </section>
+    </main>
+
+    <script src="javascripts/frameCreator.js"></script>
+    <script src="javascripts/matrixGen.js"></script>
+    <script src="javascripts/createAniPage.js"></script>
+</body>
+
+</html>

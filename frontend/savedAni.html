@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Saved animations for Matrix Light Control.">
+    <title>Saved Animations | Matrix Light Control</title>
+
+    <link rel="icon" type="image/gif" href="data:,">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="styles/styles.css">
+    <link rel="stylesheet" href="styles/savedAni.css">
+</head>
+
+<body>
+    <header class="page-header">
+        <a class="home-link" href="index.html">Matrix Light Control</a>
+    </header>
+
+    <main class="saved-page">
+        <section class="saved-shell" aria-label="Saved animations controls">
+            <section class="ani-container" aria-label="Saved animation scroller">
+                <div class="ani-track" id="aniTrack" role="listbox" aria-label="Animations"></div>
+                <div class="ani-track-empty" id="aniTrackEmpty">
+                    Loading animations...
+                </div>
+            </section>
+
+            <section class="subcontent-container">
+                <article class="aniInfo-container" aria-label="Animation information">
+                    <div class="ani-info-content">
+                        <p class="section-label">Animation Info</p>
+                        <div class="ani-info-body">
+                            <div class="selected-preview-grid" id="selectedPreviewGrid"></div>
+                            <div class="ani-info-text">
+                                <h1 class="section-title" id="aniInfoName">Saved Animations</h1>
+                                <div class="ani-meta" id="aniMeta">
+                                    <p><strong>Frames:</strong> <span id="aniInfoFrames">-</span></p>
+                                    <p><strong>Type:</strong> <span id="aniInfoType">-</span></p>
+                                    <p><strong>Reverse:</strong> <span id="aniInfoReverse">-</span></p>
+                                    <p><strong>Created:</strong> <span id="aniInfoCreatedAt">-</span></p>
+                                </div>
+                                <p class="section-copy" id="aniInfoDescription">Choose an animation from the database,
+                                    preview its details, and control
+                                    how it plays on the matrix.</p>
+                            </div>
+                        </div>
+                    </div>
+                </article>
+
+                <aside class="controls-container" aria-label="Playback controls">
+                    <div class="brightness-widget">
+                        <div class="dial-stage">
+                            <div class="volume-control">
+                                <div class="ticks brightness-ticks"></div>
+                                <div class="knob">
+                                    <div class="volume-display brightness-display">0</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <input class="slider brightness-range" type="range" min="5" max="100" value="0" step="5">
+                    </div>
+
+                    <div class="speed-widget">
+                        <div class="dial-stage">
+                            <div class="speed-control">
+                                <div class="ticks speed-ticks"></div>
+                                <div class="center-display speed-display">50ms</div>
+                            </div>
+                        </div>
+
+                        <input class="slider speed-range" type="range" min="5" max="50" value="5" step="5">
+                    </div>
+
+                    <button class="playPause-widget" type="button" aria-label="Play or pause animation">
+                        <img id="ppImage" src="images/play.png" alt="Play pause button"
+                            ani-playing-src="images/pause.png" ani-paused-src="images/play.png">
+                    </button>
+
+                    <button class="delete-btn" type="button" id="deleteAnimationBtn"
+                        aria-label="Delete selected animation">
+                        <img src="images/delete.png" alt="Delete animation">
+                    </button>
+                </aside>
+            </section>
+        </section>
+    </main>
+
+    <script src="javascripts/espControl.js"></script>
+    <script src="javascripts/brightness.js"></script>
+    <script src="javascripts/speedometer.js"></script>
+    <script src="javascripts/savedAni.js"></script>
+</body>
+
+</html>

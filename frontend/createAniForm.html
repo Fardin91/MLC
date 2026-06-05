@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Set up a new animation for Matrix Light Control.">
+    <title>Create Animation Form | Matrix Light Control</title>
+
+    <link rel="icon" type="image/gif" href="data:,">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="styles/styles.css">
+    <link rel="stylesheet" href="styles/createAniForm.css">
+</head>
+
+<body>
+    <header class="page-header">
+        <a class="home-link" href="index.html">Matrix Light Control</a>
+    </header>
+
+    <main class="create-form-page">
+        <section class="create-form-shell">
+            <section class="aniCreate-container">
+                <div class="create-header">
+                    <h1>Create your own animations</h1>
+                    <p class="create-subtitle">Start by naming the animation, choosing its type, and optionally adding a
+                        description and icon.</p>
+                </div>
+
+                <div class="aniCreateSubForm">
+                    <div class="aniCreateInfo">
+                        <form id="contentForm">
+                            <div class="formInfo-container">
+                                <label class="form-label" for="animationName">Animation name:</label>
+                                <input type="text" class="form-control" required id="animationName" autocomplete="off">
+                                <img id="nameStatusImage" src="images/redwarning.png" alt="Animation name status"
+                                    data-empty-src="images/redwarning.png" data-exists-src="images/yellowwarning.png"
+                                    data-available-src="images/tick.png"
+                                    data-empty-tooltip="Enter an animation name to check whether it is already in the database."
+                                    data-exists-tooltip="This animation name already exists in the database."
+                                    data-available-tooltip="This animation name is available and does not exist in the database yet.">
+                            </div>
+
+                            <div class="formInfo-container" id="frameContainer">
+                                <div class="field-row">
+                                    <label class="form-label" for="frameCount">Frame Count:</label>
+                                    <input type="number" class="form-control" id="frameCount" min="1" value="1">
+                                </div>
+                            </div>
+
+                            <div class="formInfo-container" id="revAniContainer">
+                                <div class="rev-ani-control">
+                                    <input type="checkbox" class="form-check-input" id="revAni" disabled>
+                                </div>
+                                <label class="form-label" for="revAni">Reverse Animation</label>
+                            </div>
+
+                            <div class="formInfo-container" id="animationTypeContainer">
+                                <label class="form-label" for="animationTypeDisplay">Content Type</label>
+                                <div id="animationTypeDisplay" class="readonly-display" aria-live="polite">Static image
+                                </div>
+                            </div>
+
+                            <div class="create-textarea-group">
+                                <label class="form-label" for="animationDescription">Description (optional)</label>
+                                <textarea id="animationDescription" class="form-control" rows="3"></textarea>
+                            </div>
+
+                        </form>
+                    </div>
+
+                </div>
+
+                <button type="submit" form="contentForm" class="create-submit-btn">Continue to Editor</button>
+            </section>
+        </section>
+    </main>
+
+    <script src="javascripts/createAniForm.js"></script>
+</body>
+
+</html>

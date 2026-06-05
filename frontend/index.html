@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Matrix Light Control web interface.">
+    <title>Matrix Light Control</title>
+
+    <link rel="icon" type="image/gif" href="data:,">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="styles/styles.css">
+    <link rel="stylesheet" href="styles/index.css">
+</head>
+
+<body>
+    <main class="index-page">
+        <section class="hero-panel" aria-label="Homepage navigation">
+            <h1 class="index-title">Matrix Light Control</h1>
+
+            <div class="connection-icons">
+                <button class="connection-card" id="database-card" type="button" aria-label="Connect database" aria-live="polite">
+                    <img id="database" src="images/database-file.png" alt="Database connection status">
+                </button>
+                <button class="connection-card" id="esp32-card" type="button" aria-label="Connect ESP32" aria-live="polite">
+                    <img id="esp32" src="images/chip.png" alt="ESP32 connection status">
+                </button>
+                <button class="connection-card connection-demo-card" id="demo-card" type="button" aria-label="Enable demo mode">
+                    <span class="demo-label">Demo</span>
+                </button>
+            </div>
+
+            <section class="feature-grid" id="featureGrid" aria-label="Feature selection">
+                <a class="feature-card is-disabled" id="savedFeature" href="savedAni.html" aria-disabled="true">
+                    <div class="feature-image-wrap">
+                        <img class="feature-image" src="images/saved.png" alt="Saved animations">
+                    </div>
+                    <h2 class="feature-title">Saved Animations</h2>
+                    <p class="feature-description">Choose animations from the database to play.</p>
+                </a>
+
+                <a class="feature-card is-disabled" id="drawFeature" href="drawLive.html" aria-disabled="true">
+                    <div class="feature-image-wrap">
+                        <img class="feature-image" src="images/wand.png" alt="Draw live">
+                    </div>
+                    <h2 class="feature-title">Draw Live</h2>
+                    <p class="feature-description">Draw directly on the matrix and see the result in real time.</p>
+                </a>
+
+                <a class="feature-card is-disabled" id="createFeature" href="createAniForm.html" aria-disabled="true">
+                    <div class="feature-image-wrap">
+                        <img class="feature-image" src="images/create.png" alt="Create animations">
+                    </div>
+                    <h2 class="feature-title">Create Animations</h2>
+                    <p class="feature-description">Build your own animations frame by frame and save them for later.</p>
+                </a>
+            </section>
+        </section>
+    </main>
+
+    <script src="javascripts/espControl.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,37 @@
+create: https://www.flaticon.com/free-icon/design_1163809?term=create&page=1&position=11&origin=search&related_id=1163809
+
+wand: https://www.flaticon.com/free-icon/magic-wand_3824273?term=create&page=1&position=5&origin=search&related_id=3824273
+
+open folder: https://www.flaticon.com/free-icon/open-folder_12075435?term=open+file&related_id=12075435
+
+closed folder: https://www.flaticon.com/free-icon/folder_3735161?term=file&related_id=3735161
+
+saved: https://www.flaticon.com/free-icon/diskette_489707?term=saved&page=1&position=6&origin=search&related_id=489707
+
+fill: https://www.flaticon.com/free-icon/paint-bucket_6936949?term=fill&related_id=6936949
+
+erase: https://www.flaticon.com/free-icon/eraser_2661282?term=erase&page=1&position=7&origin=search&related_id=2661282
+
+pencil: https://www.flaticon.com/free-icon/pencil_505159?term=pencil&related_id=505159
+
+refresh: https://www.flaticon.com/free-icon/refresh-data_11820476?term=refresh&related_id=11820476
+
+arrow: https://www.flaticon.com/free-icon/fast-forward_724816?term=arrow&related_id=724816
+
+red warning: https://www.flaticon.com/free-icon/warning_564619?term=warning&page=1&position=28&origin=search&related_id=564619
+
+yellow warning: https://www.flaticon.com/free-icon/crisis_8213126?term=warning&page=1&position=4&origin=search&related_id=8213126
+
+tick: https://www.flaticon.com/free-icon/accept_4315445?term=tick&page=1&position=14&origin=search&related_id=4315445
+
+play: https://www.flaticon.com/free-icon/play_7324690?term=play&page=2&position=38&origin=search&related_id=7324690
+
+pause: https://www.flaticon.com/free-icon/pause_10346974?term=pause&page=1&position=47&origin=search&related_id=10346974
+
+chip: https://www.flaticon.com/free-icon/chip_1670835?term=chip&page=1&position=13&origin=search&related_id=1670835
+
+database: https://www.flaticon.com/free-icon/database-file_9672250?term=database&page=1&position=12&origin=tag&related_id=9672250
+
+trash: https://www.flaticon.com/free-icon/bin_9790368?term=trash&related_id=9790368
+
+gemini> https://commons.wikimedia.org/wiki/File:Google_Gemini_icon_2025.svg

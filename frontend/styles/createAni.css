@@ -1,0 +1,307 @@
+:root {
+    --matrix-cell-size: 28px;
+}
+
+.create-page {
+    padding: 1.2rem 1.5rem 2rem;
+}
+
+.create-layout {
+    width: min(100%, 1380px);
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.25rem;
+}
+
+.create-layout-editor {
+    align-items: stretch;
+}
+
+.editor-top {
+    width: 100%;
+    display: flex;
+    gap: 1rem;
+    align-items: stretch;
+}
+
+.section-label {
+    margin: 0;
+    color: var(--highlight);
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-size: 0.82rem;
+}
+
+.editor-title {
+    margin: 0;
+    font-size: clamp(1.8rem, 3vw, 2.5rem);
+}
+
+.editor-copy {
+    margin: 0;
+    color: var(--text-secondary);
+    line-height: 1.7;
+}
+
+.editor-summary {
+    display: flex;
+    align-items: center;
+    flex: 1;
+}
+
+.summary-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    width: 100%;
+    padding: 1rem 1.2rem;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: var(--shadow);
+}
+
+.summary-label {
+    color: var(--text-secondary);
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.summary-value {
+    color: var(--text-primary);
+    font-size: 0.98rem;
+}
+
+.matrixCreator-container {
+    flex: 1;
+    display: flex;
+    align-items: stretch;
+    justify-content: center;
+    gap: 1.25rem;
+    min-width: 0;
+}
+
+.matrix-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    min-width: 0;
+}
+
+.editor-top .toolbox {
+    flex-direction: row;
+    width: auto;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+}
+
+.editor-top .toolbox .btn-edit,
+.editor-top .toolbox .cp-container {
+    width: 58px;
+    min-width: 58px;
+    max-width: 58px;
+}
+
+.editor-top .toolbox .btn-edit {
+    border-radius: 12px;
+}
+
+.editor-top .toolbox .btn-edit img {
+    width: 36px;
+    height: 36px;
+}
+
+.editor-top .toolbox .cp-container {
+    min-height: 46px;
+    border-radius: 12px;
+    padding: 6px;
+}
+
+.editor-top .toolbox .color-picker {
+    height: 30px;
+}
+
+.upload-btn {
+    min-width: 120px;
+    height: 46px;
+    align-self: center;
+    border: none;
+    border-radius: 999px;
+    padding: 0.95rem 1.5rem;
+    font-weight: 700;
+    color: #0f172a;
+    background: linear-gradient(135deg, var(--highlight) 0%, #ffb703 45%, var(--accent) 100%);
+    box-shadow: 0 12px 28px rgba(255, 170, 0, 0.28);
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.upload-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 34px rgba(255, 170, 0, 0.36);
+}
+
+.matrix-frame-status {
+    align-self: center;
+    font-size: 1.1rem;
+    color: var(--text-accent);
+    transform: translateY(-8px);
+}
+
+.frame-preview {
+    width: 300px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.frame-preview-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.frame-preview-grid {
+    width: 285px;
+    height: 285px;
+    display: grid;
+    grid-template-columns: repeat(16, 1fr);
+    grid-template-rows: repeat(16, 1fr);
+    gap: 1px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    overflow: hidden;
+    background: #0f172a;
+}
+
+.frame-preview-cell {
+    width: 100%;
+    height: 100%;
+    background: #0f172a;
+}
+
+.frame-preview.is-empty .frame-preview-grid {
+    opacity: 0.28;
+}
+
+.frame-preview.is-empty .frame-preview-label {
+    opacity: 0.55;
+}
+
+.matrix-panel-header,
+.matrix-container {
+    border: 2px solid var(--border-accent);
+    border-radius: 22px;
+    background:
+        radial-gradient(circle at top, rgba(255, 204, 51, 0.12), transparent 48%),
+        var(--secondary-bg);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(10px);
+}
+
+.matrix-panel-header {
+    padding: 1.2rem 1.5rem;
+}
+
+.matrix-panel-title {
+    margin: 0.55rem 0 0;
+    font-size: clamp(1.4rem, 2.4vw, 2rem);
+}
+
+.matrix-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: 1;
+    min-height: 620px;
+    padding: 1.5rem;
+}
+
+.matrix-stage-inner {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.matrix-main-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.matrix-current-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.matrix-current-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.frame-nav {
+    border: 1px solid rgba(255, 204, 51, 0.28);
+    border-radius: 999px;
+    padding: 0.85rem 1.1rem;
+    background: rgba(15, 23, 42, 0.8);
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.frame-nav:hover {
+    transform: translateY(-2px);
+    border-color: rgba(255, 204, 51, 0.5);
+}
+
+@media (max-width: 1200px) {
+    .editor-top {
+        flex-wrap: wrap;
+    }
+
+    .matrixCreator-container {
+        width: 100%;
+    }
+}
+
+@media (max-width: 900px) {
+    .matrixCreator-container {
+        flex-direction: column;
+    }
+
+    .matrix-main-row {
+        flex-direction: column;
+    }
+
+    .frame-preview {
+        width: 100%;
+        max-width: 180px;
+    }
+
+    .matrix-container {
+        min-height: unset;
+        overflow-x: auto;
+    }
+}
+
+@media (max-width: 640px) {
+    .create-page {
+        padding-inline: 1rem;
+    }
+
+    .matrix-panel-header,
+    .matrix-container,
+    .toolbox {
+        border-radius: 18px;
+    }
+}
