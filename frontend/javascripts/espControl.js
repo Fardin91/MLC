@@ -177,19 +177,11 @@ let espConnected = false;
 let hostIpSynced = false;
 const DEMO_MODE_STORAGE_KEY = "mlcDemoModeEnabled";
 
-console.info("espControl.js loaded");
 const dbImg = document.getElementById("database");
 const espImg = document.getElementById("esp32");
 const dbCard = document.getElementById("database-card");
 const espCard = document.getElementById("esp32-card");
 const demoCard = document.getElementById("demo-card");
-console.info("espControl: elements found", {
-  dbImg: !!dbImg,
-  espImg: !!espImg,
-  dbCard: !!dbCard,
-  espCard: !!espCard,
-  demoCard: !!demoCard,
-});
 const savedFeature = document.getElementById("savedFeature");
 const drawFeature = document.getElementById("drawFeature");
 const createFeature = document.getElementById("createFeature");
@@ -568,34 +560,13 @@ window.sendBrightness = sendBrightness;
 window.sendSpeed = sendSpeed;
 
 if (dbCard) {
-  dbCard.addEventListener("click", (ev) => {
-    console.info("espControl: database-card clicked");
-    try {
-      connectDatabaseOnly(ev);
-    } catch (err) {
-      console.error("Error in connectDatabaseOnly:", err);
-    }
-  });
+  dbCard.addEventListener("click", connectDatabaseOnly);
 }
 if (espCard) {
-  espCard.addEventListener("click", (ev) => {
-    console.info("espControl: esp32-card clicked");
-    try {
-      connectEspOnly(ev);
-    } catch (err) {
-      console.error("Error in connectEspOnly:", err);
-    }
-  });
+  espCard.addEventListener("click", connectEspOnly);
 }
 if (demoCard) {
-  demoCard.addEventListener("click", (ev) => {
-    console.info("espControl: demo-card clicked");
-    try {
-      enableDemoMode(ev);
-    } catch (err) {
-      console.error("Error in enableDemoMode:", err);
-    }
-  });
+  demoCard.addEventListener("click", enableDemoMode);
 }
 
 applyFeatureAccess();
