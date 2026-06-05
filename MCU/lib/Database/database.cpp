@@ -1,4 +1,5 @@
 #include "database.h"
+#include <WiFiClientSecure.h>
 #include <cstring>
 
 namespace
@@ -110,83 +111,232 @@ namespace
     }
 }
 
-bool matrixdb::fetchAnimationById(int animationId, const char *host, uint16_t port, AnimationData &outData)
+bool matrixdb::fetchAnimationById(int animationId, const char *host, uint16_t port, bool secure, AnimationData &outData)
 {
     outData.frameCount = 0;
     outData.reverseAnimation = false;
     outData.loadedPixelTriples = 0;
     memset(outData.pixels, 0, sizeof(outData.pixels));
 
-    WiFiClient client;
-    if (!client.connect(host, port))
+    if (secure)
     {
-        return false;
-    }
+        WiFiClientSecure client;
+        client.setInsecure();
+        if (!client.connect(host, port))
+        {
+            return false;
+        }
 
-    // Send HTTP GET request for the animation with the specified ID
-    client.print("GET /animations/");
-    client.print(animationId);
-    client.println(" HTTP/1.1");
-    client.print("Host: ");
-    client.println(host);
-    client.println("Connection: close");
-    client.println();
+        // Send HTTP GET request for the animation with the specified ID
+        client.print("GET /animations/");
+        client.print(animationId);
+        client.println(" HTTP/1.1");
+        client.print("Host: ");
+        client.println(host);
+        client.println("Connection: close");
+        client.println();
 
-    client.setTimeout(1500);
+        client.setTimeout(1500);
 
-    String statusLine = client.readStringUntil('\n');
-    statusLine.trim();
-    if (!statusLine.startsWith("HTTP/1.1 200"))
-    {
+        String statusLine = client.readStringUntil('\n');
+        statusLine.trim();
+        if (!statusLine.startsWith("HTTP/1.1 200"))
+        {
+            client.stop();
+            return false;
+        }
+
+        int contentLength = -1;
+        while (client.connected())
+        {
+            String headerLine = client.readStringUntil('\n');
+            headerLine.trim();
+            if (headerLine.length() == 0)
+            {
+                break;
+            }
+
+            if (headerLine.startsWith("Content-Length:"))
+            {
+                contentLength = headerLine.substring(String("Content-Length:").length()).toInt();
+            }
+        }
+
+        String animationObj = "";
+        if (contentLength > 0 && contentLength < 65536)
+        {
+            animationObj.reserve(contentLength + 8);
+        }
+
+        // read db response
+        uint32_t readStart = millis();
+        while (client.connected() || client.available())
+        {
+            while (client.available())
+            {
+                animationObj += static_cast<char>(client.read());
+            }
+
+            if (contentLength > 0 && animationObj.length() >= static_cast<unsigned int>(contentLength))
+            {
+                break;
+            }
+
+            if (millis() - readStart > 3000)
+            {
+                break;
+            }
+
+            delay(1);
+            yield();
+        }
         client.stop();
-        return false;
-    }
+        
+        if (animationObj.indexOf("\"id\":") < 0)
+        {
+            return false;
+        }
 
-    int contentLength = -1;
-    while (client.connected())
+        outData.frameCount = extractIntField(animationObj, "frameCount", 1);
+        if (outData.frameCount < 1)
+        {
+            outData.frameCount = 1;
+        }
+        if (outData.frameCount > matrixdb::MAX_FRAMES)
+        {
+            outData.frameCount = matrixdb::MAX_FRAMES;
+        }
+
+        // extract pixel triples
+        outData.reverseAnimation = extractBoolField(animationObj, "reverseAnimation", false);
+
+        int pixelsFieldPos = animationObj.indexOf("\"pixels\":");
+        if (pixelsFieldPos < 0)
+        {
+            return false;
+        }
+
+        int pixelsArrayStart = animationObj.indexOf('[', pixelsFieldPos);
+        int pixelsArrayEnd = animationObj.lastIndexOf(']');
+        if (pixelsArrayStart < 0 || pixelsArrayEnd < 0 || pixelsArrayEnd <= pixelsArrayStart)
+        {
+            return false;
+        }
+
+        String pixelsPayload = animationObj.substring(pixelsArrayStart, pixelsArrayEnd + 1);
+        outData.loadedPixelTriples = parsePixelTriples(pixelsPayload, outData.pixels);
+
+        return outData.loadedPixelTriples > 0;
+    }
+    else
     {
-        String headerLine = client.readStringUntil('\n');
-        headerLine.trim();
-        if (headerLine.length() == 0)
+        WiFiClient client;
+        if (!client.connect(host, port))
         {
-            break;
+            return false;
         }
 
-        if (headerLine.startsWith("Content-Length:"))
+        // Send HTTP GET request for the animation with the specified ID
+        client.print("GET /animations/");
+        client.print(animationId);
+        client.println(" HTTP/1.1");
+        client.print("Host: ");
+        client.println(host);
+        client.println("Connection: close");
+        client.println();
+
+        client.setTimeout(1500);
+
+        String statusLine = client.readStringUntil('\n');
+        statusLine.trim();
+        if (!statusLine.startsWith("HTTP/1.1 200"))
         {
-            contentLength = headerLine.substring(String("Content-Length:").length()).toInt();
+            client.stop();
+            return false;
         }
+
+        int contentLength = -1;
+        while (client.connected())
+        {
+            String headerLine = client.readStringUntil('\n');
+            headerLine.trim();
+            if (headerLine.length() == 0)
+            {
+                break;
+            }
+
+            if (headerLine.startsWith("Content-Length:"))
+            {
+                contentLength = headerLine.substring(String("Content-Length:").length()).toInt();
+            }
+        }
+
+        String animationObj = "";
+        if (contentLength > 0 && contentLength < 65536)
+        {
+            animationObj.reserve(contentLength + 8);
+        }
+
+        // read db response
+        uint32_t readStart = millis();
+        while (client.connected() || client.available())
+        {
+            while (client.available())
+            {
+                animationObj += static_cast<char>(client.read());
+            }
+
+            if (contentLength > 0 && animationObj.length() >= static_cast<unsigned int>(contentLength))
+            {
+                break;
+            }
+
+            if (millis() - readStart > 3000)
+            {
+                break;
+            }
+
+            delay(1);
+            yield();
+        }
+        client.stop();
+
+        if (animationObj.indexOf("\"id\":") < 0)
+        {
+            return false;
+        }
+
+        outData.frameCount = extractIntField(animationObj, "frameCount", 1);
+        if (outData.frameCount < 1)
+        {
+            outData.frameCount = 1;
+        }
+        if (outData.frameCount > matrixdb::MAX_FRAMES)
+        {
+            outData.frameCount = matrixdb::MAX_FRAMES;
+        }
+
+        // extract pixel triples
+        outData.reverseAnimation = extractBoolField(animationObj, "reverseAnimation", false);
+
+        int pixelsFieldPos = animationObj.indexOf("\"pixels\":");
+        if (pixelsFieldPos < 0)
+        {
+            return false;
+        }
+
+        int pixelsArrayStart = animationObj.indexOf('[', pixelsFieldPos);
+        int pixelsArrayEnd = animationObj.lastIndexOf(']');
+        if (pixelsArrayStart < 0 || pixelsArrayEnd < 0 || pixelsArrayEnd <= pixelsArrayStart)
+        {
+            return false;
+        }
+
+        String pixelsPayload = animationObj.substring(pixelsArrayStart, pixelsArrayEnd + 1);
+        outData.loadedPixelTriples = parsePixelTriples(pixelsPayload, outData.pixels);
+
+        return outData.loadedPixelTriples > 0;
     }
-
-    String animationObj = "";
-    if (contentLength > 0 && contentLength < 65536)
-    {
-        animationObj.reserve(contentLength + 8);
-    }
-
-    // read db response
-    uint32_t readStart = millis();
-    while (client.connected() || client.available())
-    {
-        while (client.available())
-        {
-            animationObj += static_cast<char>(client.read());
-        }
-
-        if (contentLength > 0 && animationObj.length() >= static_cast<unsigned int>(contentLength))
-        {
-            break;
-        }
-
-        if (millis() - readStart > 3000)
-        {
-            break;
-        }
-
-        delay(1);
-        yield();
-    }
-    client.stop();
 
     if (animationObj.indexOf("\"id\":") < 0)
     {

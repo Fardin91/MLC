@@ -15,6 +15,7 @@ namespace
 {
     constexpr uint8_t MATRIX_DATA_PIN = 13;
     uint16_t dbServerPort = DB_SERVER_PORT;
+    bool dbServerSecure = false;
     constexpr size_t DB_HOST_MAX_LEN = 63;
 
     Adafruit_NeoPixel matrix(256, MATRIX_DATA_PIN, NEO_GRB + NEO_KHZ800);
@@ -75,9 +76,14 @@ namespace
         String newHost = newHostRaw;
         newHost.trim();
 
-        // strip protocol if present
+        // detect protocol (remember if secure) then strip
+        bool secure = false;
         if (newHost.startsWith("http://") || newHost.startsWith("https://"))
         {
+            if (newHost.startsWith("https://"))
+            {
+                secure = true;
+            }
             int idx = newHost.indexOf("//");
             if (idx >= 0)
             {
@@ -125,8 +131,10 @@ namespace
 
         hostPart.toCharArray(dbServerHost, DB_HOST_MAX_LEN + 1);
         dbServerPort = portPart;
+        dbServerSecure = secure || (dbServerPort == 443);
         matrixPrefs.putString("dbHost", String(dbServerHost));
         matrixPrefs.putUInt("dbPort", dbServerPort);
+        matrixPrefs.putBool("dbSecure", dbServerSecure);
     }
 
     int parsePayloadValues(const String &payload, int values[], int maxValues)
@@ -189,7 +197,7 @@ namespace
         animationData.loadedPixelTriples = 0;
         memset(animationData.pixels, 0, sizeof(animationData.pixels));
 
-        return matrixdb::fetchAnimationById(animationId, dbServerHost, dbServerPort, animationData);
+        return matrixdb::fetchAnimationById(animationId, dbServerHost, dbServerPort, dbServerSecure, animationData);
     }
 }
 
@@ -208,6 +216,8 @@ void matrixSetup()
     {
         dbServerPort = static_cast<uint16_t>(persistedPort);
     }
+    // restore persisted secure flag
+    dbServerSecure = matrixPrefs.getBool("dbSecure", dbServerSecure);
 
     matrix.begin();
     matrix.show();

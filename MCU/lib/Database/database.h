@@ -18,7 +18,7 @@ namespace matrixdb
         uint8_t pixels[MAX_PIXEL_TRIPLES][3] = {0};
     };
 
-    bool fetchAnimationById(int animationId, const char *host, uint16_t port, AnimationData &outData);
+    bool fetchAnimationById(int animationId, const char *host, uint16_t port, bool secure, AnimationData &outData);
 }
 
 #endif

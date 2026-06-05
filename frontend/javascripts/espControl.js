@@ -301,11 +301,16 @@ function exitDemoMode() {
 }
 
 async function syncHostIpToEsp() {
-  const hostIp = await fetchHostIpForEsp32();
-  await sendHostIpToEsp32(hostIp);
+  // Prefer the configured database host (could be a tunnel URL). Fall back
+  // to asking the backend for a LAN IP when no host is stored.
+  let hostToSend = (localStorage.getItem(DB_HOST_STORAGE_KEY) || "").trim();
+  if (!hostToSend) {
+    hostToSend = await fetchHostIpForEsp32();
+  }
+  await sendHostIpToEsp32(hostToSend);
   hostIpSynced = true;
   if (espImg) {
-    espImg.title = `ESP32 Connected (DB host synced: ${hostIp})`;
+    espImg.title = `ESP32 Connected (DB host synced: ${hostToSend})`;
   }
 }
 
@@ -346,7 +351,9 @@ async function connectDatabaseOnly() {
     dbConnected = false;
     setConnectionState(dbCard, "is-error");
     if (dbImg) dbImg.title = "Database Not Connected";
-    alert("Could not reach database. Start it locally or provide a working tunnel URL.");
+    alert(
+      "Could not reach database. Start it locally or provide a working tunnel URL.",
+    );
     applyFeatureAccess();
     updateDemoAvailability();
     return;
@@ -376,13 +383,17 @@ async function connectDatabaseOnly() {
       dbConnected = false;
       setConnectionState(dbCard, "is-error");
       if (dbImg) dbImg.title = "Database Not Connected";
-      alert("Could not reach database. Start it locally or provide a working tunnel URL.");
+      alert(
+        "Could not reach database. Start it locally or provide a working tunnel URL.",
+      );
     }
   } catch (err) {
     dbConnected = false;
     setConnectionState(dbCard, "is-error");
     if (dbImg) dbImg.title = "Database Not Connected";
-    alert("Could not reach database. Start it locally or provide a working tunnel URL.");
+    alert(
+      "Could not reach database. Start it locally or provide a working tunnel URL.",
+    );
   }
 
   applyFeatureAccess();
