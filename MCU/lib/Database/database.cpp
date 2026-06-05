@@ -338,39 +338,4 @@ bool matrixdb::fetchAnimationById(int animationId, const char *host, uint16_t po
         return outData.loadedPixelTriples > 0;
     }
 
-    if (animationObj.indexOf("\"id\":") < 0)
-    {
-        return false;
-    }
-
-    outData.frameCount = extractIntField(animationObj, "frameCount", 1);
-    if (outData.frameCount < 1)
-    {
-        outData.frameCount = 1;
-    }
-    if (outData.frameCount > matrixdb::MAX_FRAMES)
-    {
-        outData.frameCount = matrixdb::MAX_FRAMES;
-    }
-
-    // extract pixel triples
-    outData.reverseAnimation = extractBoolField(animationObj, "reverseAnimation", false);
-
-    int pixelsFieldPos = animationObj.indexOf("\"pixels\":");
-    if (pixelsFieldPos < 0)
-    {
-        return false;
-    }
-
-    int pixelsArrayStart = animationObj.indexOf('[', pixelsFieldPos);
-    int pixelsArrayEnd = animationObj.lastIndexOf(']');
-    if (pixelsArrayStart < 0 || pixelsArrayEnd < 0 || pixelsArrayEnd <= pixelsArrayStart)
-    {
-        return false;
-    }
-
-    String pixelsPayload = animationObj.substring(pixelsArrayStart, pixelsArrayEnd + 1);
-    outData.loadedPixelTriples = parsePixelTriples(pixelsPayload, outData.pixels);
-
-    return outData.loadedPixelTriples > 0;
 }
