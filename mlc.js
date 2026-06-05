@@ -42,30 +42,19 @@ function getLocalNetworkAddresses() {
 }
 
 function logApiAddresses() {
-  const localAddresses = getLocalNetworkAddresses();
-
-  log(`Database API listening on http://localhost:${API_PORT}`);
-
-  if (localAddresses.length > 0) {
-    log(
-      "If another device needs to connect, use one of these local IP addresses:",
-    );
-    localAddresses.forEach((address) => log(`  http://${address}:${API_PORT}`));
-  } else {
-    log(
-      "No non-internal network address detected. Use http://localhost:3000 locally.",
-    );
-  }
+  // Intentionally minimal: no automatic printing of local addresses.
 }
 
 function startApiServer() {
-  log(`Starting database API on http://localhost:${API_PORT} ...`);
-
+  // Start backend without inheriting its stdout/stderr so it doesn't print
+  // verbose server logs into this launcher.
   apiProcess = spawn("node", ["index.js"], {
     cwd: databaseDir,
     shell: process.platform === "win32",
-    stdio: "inherit",
+    stdio: ["ignore", "pipe", "pipe"],
   });
+
+  // Do not forward child's stdout to avoid duplicate/verbose messages.
 
   apiProcess.on("exit", (code) => {
     if (!shuttingDown) {
@@ -108,7 +97,9 @@ function startLocalTunnel() {
 
         const result = await verifyTunnelUrl(tunnelUrl);
         if (!result.ok) {
-          log(`LocalTunnel verification failed: ${result.error || `status=${result.statusCode}`}`);
+          log(
+            `LocalTunnel verification failed: ${result.error || `status=${result.statusCode}`}`,
+          );
         }
       } else {
         // minimal tunnel output

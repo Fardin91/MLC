@@ -93,7 +93,13 @@ From the `Code` folder, run:
 node mlc.js
 ```
 
-This launcher now starts only the database API at `http://localhost:3000`.
+This launcher starts the backend database API on `http://localhost:3000`.
+
+If you need remote HTTPS access (for example to test from a phone or GitHub Pages), create a tunnel and paste the HTTPS URL into the site when prompted. Example:
+
+```bash
+npx localtunnel --port 3000
+```
 
 The website itself is hosted on GitHub Pages at https://fardin91.github.io/MLC/, so you do not need to run a local website server.
 
