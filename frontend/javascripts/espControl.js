@@ -13,74 +13,11 @@ function normalizeEsp32BaseUrl(url) {
 }
 
 function getEsp32BaseUrl() {
-  return localStorage.getItem(ESP32_URL_STORAGE_KEY) || "";
-}
-
-function setEsp32BaseUrl(url) {
-  const normalizedUrl = normalizeEsp32BaseUrl(url);
-
-  if (!normalizedUrl) {
-    localStorage.removeItem(ESP32_URL_STORAGE_KEY);
-    return "";
-  }
-
-  localStorage.setItem(ESP32_URL_STORAGE_KEY, normalizedUrl);
-  return normalizedUrl;
-}
-
-const DB_HOST_STORAGE_KEY = "mlcDatabaseHost";
-
-function requireEsp32BaseUrl() {
-  const esp32BaseUrl = getEsp32BaseUrl();
-
-  if (!esp32BaseUrl) {
-    throw new Error("ESP32 URL is not configured");
-  }
-
-  return esp32BaseUrl;
-}
-
-function getDatabaseHost() {
-  const savedHost = String(
-    localStorage.getItem(DB_HOST_STORAGE_KEY) || "",
-  ).trim();
-  if (!savedHost) {
-    return "localhost";
-  }
-  return savedHost.replace(/\/+$/, "");
-}
-
-function setDatabaseHost(host) {
-  let trimmed = String(host || "").trim();
-  if (!trimmed) {
-    localStorage.removeItem(DB_HOST_STORAGE_KEY);
-    return;
-  }
-
-  // If the user provided a full URL (http/https), keep it as-is (without trailing slash)
-  if (/^https?:\/\//i.test(trimmed)) {
-    trimmed = trimmed.replace(/\/+$/, "");
-    localStorage.setItem(DB_HOST_STORAGE_KEY, trimmed);
-    return trimmed;
-  }
-
   // Otherwise store host[:port] without protocol or trailing slash
   trimmed = trimmed.replace(/^https?:\/\//i, "").replace(/\/+$/, "");
   localStorage.setItem(DB_HOST_STORAGE_KEY, trimmed);
   return trimmed;
-}
-
-function getDatabaseApiUrl() {
-  const host = getDatabaseHost();
-  // If the stored host is a full URL (starts with http/https), use it as-is
-  if (/^https?:\/\//i.test(host)) {
-    return host;
-  }
-  // If the host already includes a port (e.g. 192.168.1.18:3000), use it as-is
-  if (/:\d+$/.test(host)) {
-    return `http://${host}`;
-  }
-  return `http://${host}:3000`;
+  return trimmed;
 }
 
 function getDatabaseFetchOptions(method = "GET", additionalHeaders = {}) {
@@ -91,6 +28,46 @@ function getDatabaseFetchOptions(method = "GET", additionalHeaders = {}) {
       ...additionalHeaders,
     },
   };
+}
+
+function parseTunnelReminderIp(html) {
+  const match = html.match(/([0-9]{1,3}(?:\.[0-9]{1,3}){3})/);
+  return match ? match[1] : null;
+}
+
+async function fetchDatabaseStatusFromUrl(baseUrl) {
+  const normalizedUrl = baseUrl.replace(/\/+$/, "");
+  const url = `${normalizedUrl}/api/status`;
+  const response = await fetch(url, getDatabaseFetchOptions());
+  const contentType = String(
+    response.headers.get("content-type") || "",
+  ).toLowerCase();
+
+  if (contentType.includes("application/json")) {
+    return response;
+  }
+
+  const body = await response.text();
+  const hintIp = parseTunnelReminderIp(body);
+  if (hintIp) {
+    const fallbackUrl = `https://${hintIp}`;
+    const fallbackResponse = await fetch(
+      `${fallbackUrl}/api/status`,
+      getDatabaseFetchOptions(),
+    );
+    if (fallbackResponse.ok) {
+      setDatabaseHost(fallbackUrl);
+      return fallbackResponse;
+    }
+    throw new Error(
+      `Tunnel reminder page detected; fallback to ${fallbackUrl} returned ${fallbackResponse.status}`,
+    );
+  }
+
+  if (!response.ok) {
+    throw new Error(`Status returned ${response.status}`);
+  }
+  return response;
 }
 
 window.getDatabaseApiUrl = getDatabaseApiUrl;
@@ -321,12 +298,9 @@ async function connectDatabaseOnly() {
     window.location.protocol === "https:" && databaseUrl.startsWith("http://");
 
   try {
-      const response = await fetch(
-        `${databaseUrl}/api/status`,
-        getDatabaseFetchOptions(),
-      );
-      dbConnected = response.ok;
-      setConnectionState(dbCard, dbConnected ? "is-connected" : "is-error");
+    const response = await fetchDatabaseStatusFromUrl(databaseUrl);
+    dbConnected = response.ok;
+    setConnectionState(dbCard, dbConnected ? "is-connected" : "is-error");
     if (dbImg) {
       dbImg.title = dbConnected
         ? `Database Connected (${databaseHost})`
@@ -365,12 +339,8 @@ async function connectDatabaseOnly() {
       if (httpsUrl && /^https:\/\//i.test(String(httpsUrl).trim())) {
         const normalized = String(httpsUrl).trim().replace(/\/+$/, "");
         try {
-          const testResponse = await fetch(
-            `${normalized}/api/status`,
-            getDatabaseFetchOptions(),
-          );
+          const testResponse = await fetchDatabaseStatusFromUrl(normalized);
           if (testResponse.ok) {
-            // Store the full https URL and mark connected
             setDatabaseHost(normalized);
             dbConnected = true;
             setConnectionState(dbCard, "is-connected");
