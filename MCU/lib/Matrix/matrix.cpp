@@ -105,6 +105,7 @@ namespace
         // parse optional :port
         String hostPart = newHost;
         uint16_t portPart = dbServerPort;
+        bool explicitPort = false;
         int colonPos = newHost.lastIndexOf(':');
         if (colonPos > 0)
         {
@@ -123,7 +124,13 @@ namespace
             {
                 portPart = static_cast<uint16_t>(maybePort.toInt());
                 hostPart = newHost.substring(0, colonPos);
+                explicitPort = true;
             }
+        }
+
+        if (secure && !explicitPort)
+        {
+            portPart = 443;
         }
 
         if (!looksLikeHost(hostPart))
@@ -225,7 +232,11 @@ void matrixSetup()
     printDivider();
     Serial.println("MATRIX ENGINE: READY");
     Serial.print("Active animation DB host: ");
-    Serial.println(dbServerHost);
+    Serial.print(dbServerHost);
+    Serial.print(":");
+    Serial.print(dbServerPort);
+    Serial.print(dbServerSecure ? " (HTTPS)" : " (HTTP)");
+    Serial.println();
     printDivider();
 }
 
