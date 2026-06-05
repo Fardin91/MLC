@@ -342,7 +342,13 @@ async function connectDatabaseOnly() {
           .replace(/^https?:\/\//i, "")
           .replace(/\/+$/, "");
         if (sanitizedHost) {
-          const remoteUrl = `http://${sanitizedHost}:3000/api/status`;
+          // Respect host:port if the user pasted it (avoid appending :3000 twice)
+          let remoteUrl;
+          if (/:\d+$/.test(sanitizedHost)) {
+            remoteUrl = `http://${sanitizedHost}/api/status`;
+          } else {
+            remoteUrl = `http://${sanitizedHost}:3000/api/status`;
+          }
           try {
             const remoteResponse = await fetch(remoteUrl);
             if (remoteResponse.ok) {
