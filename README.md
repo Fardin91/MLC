@@ -15,7 +15,6 @@ This README focuses mainly on launching and understanding the frontend/backend s
 - [Requirements](#requirements)
 - [First-Time Setup](#first-time-setup)
 - [Running Locally](#running-locally)
-- [GitHub Hosting Plan](#github-hosting-plan)
 - [Website Pages](#website-pages)
 - [Project Organization](#project-organization)
 - [Database API](#database-api)
@@ -99,19 +98,6 @@ The launcher will:
 - open `http://localhost:5500/index.html` in the browser
 
 To stop the project, press `Ctrl+C` in the terminal running `mlc.js`.
-
-## GitHub Hosting Plan
-
-The best setup is:
-
-- Host only the `frontend` folder on GitHub Pages.
-- Keep the `backend` folder on each user's PC.
-- Each user runs the backend locally with `npm install` and `npm start` from the `backend` folder.
-- The website calls `http://localhost:3000`, which means it talks to the backend running on the user's own computer.
-
-GitHub Pages cannot host the database/backend because it only serves static files such as HTML, CSS, JavaScript, and images. It cannot run Node.js, Express, or SQLite. To host the backend online, you would need a real backend host such as Render, Railway, Fly.io, a VPS, or another server platform.
-
-For this project, local backend hosting is reasonable because the ESP32 and SQLite database are also local-network/local-machine pieces.
 
 ## Website Pages
 
