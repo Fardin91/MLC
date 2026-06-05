@@ -531,7 +531,10 @@ async function hydrateConnectionStateOnLoad() {
   let espOk = false;
 
   try {
-    const dbResponse = await fetch(`${getDatabaseApiUrl()}/api/status`);
+    const dbResponse = await fetch(
+      `${getDatabaseApiUrl()}/api/status`,
+      getDatabaseFetchOptions(),
+    );
     dbOk = dbResponse.ok;
   } catch (error) {
     dbOk = false;
