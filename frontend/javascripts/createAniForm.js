@@ -41,17 +41,31 @@ if (form && nameInput && frameCountInput) {
     const savedHost = String(
       localStorage.getItem("mlcDatabaseHost") || "",
     ).trim();
-    return savedHost
-      ? savedHost.replace(/^https?:\/\//i, "").replace(/\/+$/, "")
-      : "localhost";
+    if (!savedHost) {
+      return "localhost";
+    }
+    return savedHost.replace(/\/+$/, "");
   }
 
   function getDatabaseApiUrl() {
     const host = getDatabaseHost();
-    if (/:\d+$/.test(host)) {
+    if (/^https?:\/\//i.test(host)) {
+      return host;
+    }
+    if (/\:\d+$/.test(host)) {
       return `http://${host}`;
     }
     return `http://${host}:3000`;
+  }
+
+  function getDatabaseFetchOptions(method = "GET", additionalHeaders = {}) {
+    return {
+      method,
+      headers: {
+        "bypass-tunnel-reminder": "1",
+        ...additionalHeaders,
+      },
+    };
   }
 
   function setContentTypeDisplay(contentType) {
@@ -67,6 +81,7 @@ if (form && nameInput && frameCountInput) {
   async function checkAnimationName(name) {
     const response = await fetch(
       `${getDatabaseApiUrl()}/check-name?name=${encodeURIComponent(name)}`,
+      getDatabaseFetchOptions(),
     );
 
     if (!response.ok) {

@@ -83,6 +83,16 @@ function getDatabaseApiUrl() {
   return `http://${host}:3000`;
 }
 
+function getDatabaseFetchOptions(method = "GET", additionalHeaders = {}) {
+  return {
+    method,
+    headers: {
+      "bypass-tunnel-reminder": "1",
+      ...additionalHeaders,
+    },
+  };
+}
+
 window.getDatabaseApiUrl = getDatabaseApiUrl;
 window.setDatabaseHost = setDatabaseHost;
 
@@ -168,7 +178,10 @@ function sendHostIpToEsp32(hostIp) {
 }
 
 async function fetchHostIpForEsp32() {
-  const response = await fetch(`${getDatabaseApiUrl()}/api/host-ip`);
+  const response = await fetch(
+    `${getDatabaseApiUrl()}/api/host-ip`,
+    getDatabaseFetchOptions(),
+  );
   if (!response.ok) {
     throw new Error("Failed to fetch host IP");
   }
@@ -308,9 +321,12 @@ async function connectDatabaseOnly() {
     window.location.protocol === "https:" && databaseUrl.startsWith("http://");
 
   try {
-    const response = await fetch(`${databaseUrl}/api/status`);
-    dbConnected = response.ok;
-    setConnectionState(dbCard, dbConnected ? "is-connected" : "is-error");
+      const response = await fetch(
+        `${databaseUrl}/api/status`,
+        getDatabaseFetchOptions(),
+      );
+      dbConnected = response.ok;
+      setConnectionState(dbCard, dbConnected ? "is-connected" : "is-error");
     if (dbImg) {
       dbImg.title = dbConnected
         ? `Database Connected (${databaseHost})`
@@ -349,7 +365,10 @@ async function connectDatabaseOnly() {
       if (httpsUrl && /^https:\/\//i.test(String(httpsUrl).trim())) {
         const normalized = String(httpsUrl).trim().replace(/\/+$/, "");
         try {
-          const testResponse = await fetch(`${normalized}/api/status`);
+          const testResponse = await fetch(
+            `${normalized}/api/status`,
+            getDatabaseFetchOptions(),
+          );
           if (testResponse.ok) {
             // Store the full https URL and mark connected
             setDatabaseHost(normalized);

@@ -222,7 +222,14 @@ async function loadAnimations() {
   }
 
   try {
-    const response = await fetch(`${getDatabaseApiUrl()}/animations`);
+    const response = await fetch(
+      `${getDatabaseApiUrl()}/animations`,
+      {
+        headers: {
+          "bypass-tunnel-reminder": "1",
+        },
+      },
+    );
     if (!response.ok) throw new Error("Failed to load animations");
     const result = await response.json();
 
@@ -288,6 +295,9 @@ deleteAnimationButton?.addEventListener("click", async () => {
       `${getDatabaseApiUrl()}/animations/${selected.id}`,
       {
         method: "DELETE",
+        headers: {
+          "bypass-tunnel-reminder": "1",
+        },
       },
     );
 

@@ -34,17 +34,31 @@ uploadButton?.addEventListener("click", async () => {
     const savedHost = String(
       localStorage.getItem("mlcDatabaseHost") || "",
     ).trim();
-    return savedHost
-      ? savedHost.replace(/^https?:\/\//i, "").replace(/\/+$/, "")
-      : "localhost";
+    if (!savedHost) {
+      return "localhost";
+    }
+    return savedHost.replace(/\/+$/, "");
   }
 
   function getDatabaseApiUrl() {
     const host = getDatabaseHost();
-    if (/:\d+$/.test(host)) {
+    if (/^https?:\/\//i.test(host)) {
+      return host;
+    }
+    if (/\:\d+$/.test(host)) {
       return `http://${host}`;
     }
     return `http://${host}:3000`;
+  }
+
+  function getDatabaseFetchOptions(method = "GET", additionalHeaders = {}) {
+    return {
+      method,
+      headers: {
+        "bypass-tunnel-reminder": "1",
+        ...additionalHeaders,
+      },
+    };
   }
 
   const payload = {
@@ -54,13 +68,15 @@ uploadButton?.addEventListener("click", async () => {
       : [],
   };
 
-  const response = await fetch(`${getDatabaseApiUrl()}/submit`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
+  const response = await fetch(
+    `${getDatabaseApiUrl()}/submit`,
+    {
+      ...getDatabaseFetchOptions("POST", {
+        "Content-Type": "application/json",
+      }),
+      body: JSON.stringify(payload),
     },
-    body: JSON.stringify(payload),
-  });
+  );
 
   if (!response.ok) {
     alert("Could not upload animation.");
