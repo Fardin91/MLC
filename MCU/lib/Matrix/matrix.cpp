@@ -14,7 +14,7 @@
 namespace
 {
     constexpr uint8_t MATRIX_DATA_PIN = 13;
-    constexpr uint16_t DB_SERVER_PORT_VALUE = DB_SERVER_PORT;
+    uint16_t dbServerPort = DB_SERVER_PORT;
     constexpr size_t DB_HOST_MAX_LEN = 63;
 
     Adafruit_NeoPixel matrix(256, MATRIX_DATA_PIN, NEO_GRB + NEO_KHZ800);
@@ -43,48 +43,31 @@ namespace
         Serial.println(value);
     }
 
-    bool isValidIpv4(const String &candidate)
+    bool looksLikeHost(const String &candidate)
     {
-        int dotCount = 0;
-        int segmentStart = 0;
+        if (candidate.length() == 0)
+            return false;
 
-        for (int i = 0; i <= candidate.length(); i++)
+        // Accept IPv4, hostnames, or IP:port / host:port forms (no protocol)
+        // Reject strings containing spaces or slashes
+        for (unsigned int i = 0; i < candidate.length(); i++)
         {
-            bool segmentEnd = (i == candidate.length()) || (candidate[i] == '.');
-            if (!segmentEnd)
-            {
-                if (!isDigit(candidate[i]))
-                {
-                    return false;
-                }
-                continue;
-            }
-
-            String segment = candidate.substring(segmentStart, i);
-            if (segment.length() == 0 || segment.length() > 3)
-            {
+            char c = candidate[i];
+            if (c == ' ' || c == '\t' || c == '\n' || c == '/')
                 return false;
-            }
-
-            int value = segment.toInt();
-            if (value < 0 || value > 255)
-            {
-                return false;
-            }
-
-            if (segment.length() > 1 && segment[0] == '0')
-            {
-                return false;
-            }
-
-            if (i != candidate.length())
-            {
-                dotCount++;
-            }
-            segmentStart = i + 1;
         }
 
-        return dotCount == 3;
+        // simple check: allow digits, letters, dot, hyphen, and colon (for port)
+        for (unsigned int i = 0; i < candidate.length(); i++)
+        {
+            char c = candidate[i];
+            if (!(isDigit(c) || isAlpha(c) || c == '.' || c == '-' || c == ':'))
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     void updateDbHost(const String &newHostRaw)
@@ -92,13 +75,58 @@ namespace
         String newHost = newHostRaw;
         newHost.trim();
 
-        if (!isValidIpv4(newHost) || newHost.length() > DB_HOST_MAX_LEN || newHost.equals(String(dbServerHost)))
+        // strip protocol if present
+        if (newHost.startsWith("http://") || newHost.startsWith("https://"))
         {
-            return;
+            int idx = newHost.indexOf("//");
+            if (idx >= 0)
+            {
+                newHost = newHost.substring(idx + 2);
+            }
         }
 
-        newHost.toCharArray(dbServerHost, DB_HOST_MAX_LEN + 1);
+        // strip any trailing path
+        int slashPos = newHost.indexOf('/');
+        if (slashPos >= 0)
+        {
+            newHost = newHost.substring(0, slashPos);
+        }
+
+        newHost.trim();
+        if (newHost.length() == 0 || newHost.length() > DB_HOST_MAX_LEN)
+            return;
+
+        // parse optional :port
+        String hostPart = newHost;
+        uint16_t portPart = dbServerPort;
+        int colonPos = newHost.lastIndexOf(':');
+        if (colonPos > 0)
+        {
+            String maybePort = newHost.substring(colonPos + 1);
+            bool allDigits = true;
+            for (unsigned int i = 0; i < maybePort.length(); i++)
+            {
+                if (!isDigit(maybePort[i]))
+                {
+                    allDigits = false;
+                    break;
+                }
+            }
+
+            if (allDigits && maybePort.length() > 0)
+            {
+                portPart = static_cast<uint16_t>(maybePort.toInt());
+                hostPart = newHost.substring(0, colonPos);
+            }
+        }
+
+        if (!looksLikeHost(hostPart))
+            return;
+
+        hostPart.toCharArray(dbServerHost, DB_HOST_MAX_LEN + 1);
+        dbServerPort = portPart;
         matrixPrefs.putString("dbHost", String(dbServerHost));
+        matrixPrefs.putUInt("dbPort", dbServerPort);
     }
 
     int parsePayloadValues(const String &payload, int values[], int maxValues)
@@ -161,7 +189,7 @@ namespace
         animationData.loadedPixelTriples = 0;
         memset(animationData.pixels, 0, sizeof(animationData.pixels));
 
-        return matrixdb::fetchAnimationById(animationId, dbServerHost, DB_SERVER_PORT_VALUE, animationData);
+        return matrixdb::fetchAnimationById(animationId, dbServerHost, dbServerPort, animationData);
     }
 }
 
@@ -173,6 +201,12 @@ void matrixSetup()
     if (persistedHost.length() > 0 && persistedHost.length() <= DB_HOST_MAX_LEN)
     {
         persistedHost.toCharArray(dbServerHost, DB_HOST_MAX_LEN + 1);
+    }
+    // restore persisted port if present
+    uint32_t persistedPort = matrixPrefs.getUInt("dbPort", dbServerPort);
+    if (persistedPort > 0 && persistedPort <= 65535)
+    {
+        dbServerPort = static_cast<uint16_t>(persistedPort);
     }
 
     matrix.begin();
