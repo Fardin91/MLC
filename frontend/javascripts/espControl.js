@@ -47,23 +47,35 @@ function getDatabaseHost() {
   if (!savedHost) {
     return "localhost";
   }
-  return savedHost.replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+  return savedHost.replace(/\/+$/, "");
 }
 
 function setDatabaseHost(host) {
-  const trimmed = String(host || "")
-    .trim()
-    .replace(/^https?:\/\//i, "")
-    .replace(/\/+$/, "");
+  let trimmed = String(host || "").trim();
   if (!trimmed) {
     localStorage.removeItem(DB_HOST_STORAGE_KEY);
-  } else {
-    localStorage.setItem(DB_HOST_STORAGE_KEY, trimmed);
+    return;
   }
+
+  // If the user provided a full URL (http/https), keep it as-is (without trailing slash)
+  if (/^https?:\/\//i.test(trimmed)) {
+    trimmed = trimmed.replace(/\/+$/, "");
+    localStorage.setItem(DB_HOST_STORAGE_KEY, trimmed);
+    return trimmed;
+  }
+
+  // Otherwise store host[:port] without protocol or trailing slash
+  trimmed = trimmed.replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+  localStorage.setItem(DB_HOST_STORAGE_KEY, trimmed);
+  return trimmed;
 }
 
 function getDatabaseApiUrl() {
   const host = getDatabaseHost();
+  // If the stored host is a full URL (starts with http/https), use it as-is
+  if (/^https?:\/\//i.test(host)) {
+    return host;
+  }
   // If the host already includes a port (e.g. 192.168.1.18:3000), use it as-is
   if (/:\d+$/.test(host)) {
     return `http://${host}`;
@@ -321,10 +333,42 @@ async function connectDatabaseOnly() {
     }
 
     if (isMixedContent) {
-      alert(
-        `This page is loaded over HTTPS, so the browser blocks connections to the local HTTP database API at ${databaseHost}:3000. ` +
-          "Use the local website on HTTP, or serve the API over HTTPS instead.",
-      );
+      // Offer the user a chance to paste an HTTPS tunnel URL (eg. from ngrok)
+      const info =
+        `This page is loaded over HTTPS, so the browser blocks connections to the local HTTP database API at ${databaseHost}:3000.\n\n` +
+        "Options:\n" +
+        "  1) Serve the website locally over HTTP (open the site using your PC's IP), or\n" +
+        "  2) Create a secure tunnel to the API and paste the https URL below (recommended).\n\n" +
+        "Quick ngrok example (on your PC):\n  ngrok http 3000\n\n" +
+        "If you have an HTTPS URL for the API (for example https://abcd-1234.ngrok.io), paste it now.\n\n";
+
+      const httpsUrl = window.prompt(info + "Paste the HTTPS URL for the API (or Cancel):", "");
+      if (httpsUrl && /^https:\/\//i.test(String(httpsUrl).trim())) {
+        const normalized = String(httpsUrl).trim().replace(/\/+$/, "");
+        try {
+          const testResponse = await fetch(`${normalized}/api/status`);
+          if (testResponse.ok) {
+            // Store the full https URL and mark connected
+            setDatabaseHost(normalized);
+            dbConnected = true;
+            setConnectionState(dbCard, "is-connected");
+            if (dbImg) {
+              dbImg.title = `Database Connected (${normalized})`;
+            }
+          } else {
+            throw new Error(`Status returned ${testResponse.status}`);
+          }
+        } catch (err) {
+          console.error("HTTPS DB check failed:", err);
+          alert(
+            "Could not reach the API at the provided HTTPS URL. Make sure the tunnel is running and try again.",
+          );
+        }
+      } else {
+        alert(
+          "The page is served over HTTPS and cannot contact a local HTTP API. Use the local site on HTTP or provide an HTTPS API URL (ngrok or similar).",
+        );
+      }
     } else {
       const remoteHost = window.prompt(
         "Database not found. If the database is on another device, paste its IP address here (for example 192.168.1.123). Otherwise leave blank and start the local DB.",
