@@ -11,9 +11,6 @@ backend/database.db
 MCU/.pio/
 MCU/.vscode/
 
-# Course reference project, not part of deployment
-example/
-
 # OS/editor noise
 .DS_Store
 Thumbs.db

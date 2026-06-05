@@ -222,14 +222,11 @@ async function loadAnimations() {
   }
 
   try {
-    const response = await fetch(
-      `${getDatabaseApiUrl()}/animations`,
-      {
-        headers: {
-          "bypass-tunnel-reminder": "1",
-        },
+    const response = await fetch(`${getDatabaseApiUrl()}/animations`, {
+      headers: {
+        "bypass-tunnel-reminder": "1",
       },
-    );
+    });
     if (!response.ok) throw new Error("Failed to load animations");
     const result = await response.json();
 

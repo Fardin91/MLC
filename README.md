@@ -101,6 +101,8 @@ If you need remote HTTPS access (for example to test from a phone or GitHub Page
 npx localtunnel --port 3000
 ```
 
+When the site is using an HTTPS tunnel URL, the ESP32 can now receive that tunnel host and connect using HTTPS automatically. If the tunnel URL does not include a port, the ESP defaults to port `443` for secure connections.
+
 The website itself is hosted on GitHub Pages at https://fardin91.github.io/MLC/, so you do not need to run a local website server.
 
 To stop the project, press `Ctrl+C` in the terminal running `mlc.js`.
@@ -155,6 +157,8 @@ http://192.168.1.42
 If you paste only the IP address, the website automatically adds `http://`.
 
 The URL is saved in browser `localStorage`, so it is remembered until changed or cleared.
+
+When the database is connected through a tunnel, the site will send the configured database host to the ESP so the ESP can fetch animations from the same working endpoint.
 
 ## SQLite Database
 
@@ -212,8 +216,9 @@ Then reload the GitHub Pages website.
 
 - Check that the ESP32 is powered on.
 - Check that the pasted URL/IP is correct.
-- Make sure the computer and ESP32 are on the same network.
+- Make sure the computer and ESP32 are on the same network, or if using GitHub Pages/phone access from another network, use a public HTTPS tunnel URL.
 - Click the ESP32 connection button again and enter the new URL.
+- If the ESP is using a tunnel URL, confirm the startup log shows the host with `:443 (HTTPS)`.
 
 ## Notes
 

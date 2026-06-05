@@ -68,15 +68,12 @@ uploadButton?.addEventListener("click", async () => {
       : [],
   };
 
-  const response = await fetch(
-    `${getDatabaseApiUrl()}/submit`,
-    {
-      ...getDatabaseFetchOptions("POST", {
-        "Content-Type": "application/json",
-      }),
-      body: JSON.stringify(payload),
-    },
-  );
+  const response = await fetch(`${getDatabaseApiUrl()}/submit`, {
+    ...getDatabaseFetchOptions("POST", {
+      "Content-Type": "application/json",
+    }),
+    body: JSON.stringify(payload),
+  });
 
   if (!response.ok) {
     alert("Could not upload animation.");
