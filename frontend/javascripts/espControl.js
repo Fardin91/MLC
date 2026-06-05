@@ -63,7 +63,12 @@ function setDatabaseHost(host) {
 }
 
 function getDatabaseApiUrl() {
-  return `http://${getDatabaseHost()}:3000`;
+  const host = getDatabaseHost();
+  // If the host already includes a port (e.g. 192.168.1.18:3000), use it as-is
+  if (/:\d+$/.test(host)) {
+    return `http://${host}`;
+  }
+  return `http://${host}:3000`;
 }
 
 window.getDatabaseApiUrl = getDatabaseApiUrl;

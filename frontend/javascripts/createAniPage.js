@@ -40,7 +40,11 @@ uploadButton?.addEventListener("click", async () => {
   }
 
   function getDatabaseApiUrl() {
-    return `http://${getDatabaseHost()}:3000`;
+    const host = getDatabaseHost();
+    if (/:\d+$/.test(host)) {
+      return `http://${host}`;
+    }
+    return `http://${host}:3000`;
   }
 
   const payload = {
