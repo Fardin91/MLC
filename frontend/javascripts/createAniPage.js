@@ -30,17 +30,32 @@ uploadButton?.addEventListener("click", async () => {
     return;
   }
 
+  function getDatabaseHost() {
+    const savedHost = String(
+      localStorage.getItem("mlcDatabaseHost") || "",
+    ).trim();
+    return savedHost
+      ? savedHost.replace(/^https?:\/\//i, "").replace(/\/+$/, "")
+      : "localhost";
+  }
+
+  function getDatabaseApiUrl() {
+    return `http://${getDatabaseHost()}:3000`;
+  }
+
   const payload = {
     ...pendingConfig,
-    pixels: window.frameCreator?.getAllPixels ? window.frameCreator.getAllPixels() : []
+    pixels: window.frameCreator?.getAllPixels
+      ? window.frameCreator.getAllPixels()
+      : [],
   };
 
-  const response = await fetch("http://localhost:3000/submit", {
+  const response = await fetch(`${getDatabaseApiUrl()}/submit`, {
     method: "POST",
     headers: {
-      "Content-Type": "application/json"
+      "Content-Type": "application/json",
     },
-    body: JSON.stringify(payload)
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {

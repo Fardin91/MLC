@@ -1,15 +1,15 @@
 const ESP32_URL_STORAGE_KEY = "mlcEsp32BaseUrl";
 
 function normalizeEsp32BaseUrl(url) {
-  const trimmedUrl = String(url || "").trim().replace(/\/+$/, "");
+  const trimmedUrl = String(url || "")
+    .trim()
+    .replace(/\/+$/, "");
 
   if (!trimmedUrl) {
     return "";
   }
 
-  return /^https?:\/\//i.test(trimmedUrl)
-    ? trimmedUrl
-    : `http://${trimmedUrl}`;
+  return /^https?:\/\//i.test(trimmedUrl) ? trimmedUrl : `http://${trimmedUrl}`;
 }
 
 function getEsp32BaseUrl() {
@@ -28,6 +28,8 @@ function setEsp32BaseUrl(url) {
   return normalizedUrl;
 }
 
+const DB_HOST_STORAGE_KEY = "mlcDatabaseHost";
+
 function requireEsp32BaseUrl() {
   const esp32BaseUrl = getEsp32BaseUrl();
 
@@ -37,6 +39,35 @@ function requireEsp32BaseUrl() {
 
   return esp32BaseUrl;
 }
+
+function getDatabaseHost() {
+  const savedHost = String(
+    localStorage.getItem(DB_HOST_STORAGE_KEY) || "",
+  ).trim();
+  if (!savedHost) {
+    return "localhost";
+  }
+  return savedHost.replace(/^https?:\/\//i, "").replace(/\/+$/, "");
+}
+
+function setDatabaseHost(host) {
+  const trimmed = String(host || "")
+    .trim()
+    .replace(/^https?:\/\//i, "")
+    .replace(/\/+$/, "");
+  if (!trimmed) {
+    localStorage.removeItem(DB_HOST_STORAGE_KEY);
+  } else {
+    localStorage.setItem(DB_HOST_STORAGE_KEY, trimmed);
+  }
+}
+
+function getDatabaseApiUrl() {
+  return `http://${getDatabaseHost()}:3000`;
+}
+
+window.getDatabaseApiUrl = getDatabaseApiUrl;
+window.setDatabaseHost = setDatabaseHost;
 
 function sendEsp32Request(params) {
   const query = new URLSearchParams(params);
@@ -120,7 +151,7 @@ function sendHostIpToEsp32(hostIp) {
 }
 
 async function fetchHostIpForEsp32() {
-  const response = await fetch("http://localhost:3000/api/host-ip");
+  const response = await fetch(`${getDatabaseApiUrl()}/api/host-ip`);
   if (!response.ok) {
     throw new Error("Failed to fetch host IP");
   }
@@ -255,13 +286,21 @@ async function connectDatabaseOnly() {
   dbConnected = false;
 
   try {
-    const response = await fetch("http://localhost:3000/api/status");
+    const response = await fetch(`${getDatabaseApiUrl()}/api/status`);
     dbConnected = response.ok;
     setConnectionState(dbCard, dbConnected ? "is-connected" : "is-error");
     if (dbImg) {
       dbImg.title = dbConnected
-        ? "Database Connected"
+        ? `Database Connected (${getDatabaseHost()})`
         : "Database Not Connected";
+    }
+
+    if (!dbConnected) {
+      alert(
+        "Could not connect to the database at localhost. " +
+          "If the database should run locally, please start it first. " +
+          "If the database is on another device, paste its IP address.",
+      );
     }
   } catch (error) {
     console.error("Database check failed:", error);
@@ -269,6 +308,55 @@ async function connectDatabaseOnly() {
     setConnectionState(dbCard, "is-error");
     if (dbImg) {
       dbImg.title = "Database Not Connected";
+    }
+
+    const remoteHost = window.prompt(
+      "Database not found on localhost. If the database is on another device, paste its IP address here (for example 192.168.1.123). Otherwise leave blank and start the local DB.",
+      getDatabaseHost() === "localhost" ? "" : getDatabaseHost(),
+    );
+
+    if (remoteHost === null) {
+      alert(
+        "The database is not reachable. Start it first with `node mlc.js` in the project folder. " +
+          "If the database is on another device, run it there and paste its IP address.",
+      );
+    } else {
+      const sanitizedHost = String(remoteHost || "")
+        .trim()
+        .replace(/^https?:\/\//i, "")
+        .replace(/\/+$/, "");
+      if (sanitizedHost) {
+        const remoteUrl = `http://${sanitizedHost}:3000/api/status`;
+        try {
+          const remoteResponse = await fetch(remoteUrl);
+          if (remoteResponse.ok) {
+            dbConnected = true;
+            setDatabaseHost(sanitizedHost);
+            setConnectionState(dbCard, "is-connected");
+            if (dbImg) {
+              dbImg.title = `Database Connected (${sanitizedHost})`;
+            }
+          } else {
+            throw new Error(`Status returned ${remoteResponse.status}`);
+          }
+        } catch (remoteError) {
+          console.error("Remote database check failed:", remoteError);
+          dbConnected = false;
+          setConnectionState(dbCard, "is-error");
+          if (dbImg) {
+            dbImg.title = "Database Not Connected";
+          }
+          alert(
+            "Could not reach the database at the provided IP address. " +
+              "Make sure the database is running on port 3000 and that the host is reachable.",
+          );
+        }
+      } else {
+        alert(
+          "The database is not reachable. Start it first with `node mlc.js` in the project folder. " +
+            "If the database is on another device, run it there and paste its IP address.",
+        );
+      }
     }
   }
 
@@ -351,7 +439,7 @@ async function hydrateConnectionStateOnLoad() {
   let espOk = false;
 
   try {
-    const dbResponse = await fetch("http://localhost:3000/api/status");
+    const dbResponse = await fetch(`${getDatabaseApiUrl()}/api/status`);
     dbOk = dbResponse.ok;
   } catch (error) {
     dbOk = false;

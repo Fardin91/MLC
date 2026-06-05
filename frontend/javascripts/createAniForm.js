@@ -8,130 +8,150 @@ const revAniContainer = document.getElementById("revAniContainer");
 const animationTypeDisplay = document.getElementById("animationTypeDisplay");
 
 if (form && nameInput && frameCountInput) {
-    const statusImages = nameStatusImage ? {
+  const statusImages = nameStatusImage
+    ? {
         empty: nameStatusImage.dataset.emptySrc,
         exists: nameStatusImage.dataset.existsSrc,
-        available: nameStatusImage.dataset.availableSrc
-    } : {};
+        available: nameStatusImage.dataset.availableSrc,
+      }
+    : {};
 
-    const nameStatusTooltips = nameStatusImage ? {
+  const nameStatusTooltips = nameStatusImage
+    ? {
         empty: nameStatusImage.dataset.emptyTooltip,
         exists: nameStatusImage.dataset.existsTooltip,
-        available: nameStatusImage.dataset.availableTooltip
-    } : {};
+        available: nameStatusImage.dataset.availableTooltip,
+      }
+    : {};
 
-    let nameCheckTimeout;
-    let selectedContentType = "static image";
+  let nameCheckTimeout;
+  let selectedContentType = "static image";
 
-    function setNameStatus(status) {
-        if (!nameStatusImage) {
-            return;
-        }
-
-        nameStatusImage.src = statusImages[status];
-        nameStatusImage.title = nameStatusTooltips[status];
-        nameStatusImage.setAttribute("aria-label", nameStatusTooltips[status]);
+  function setNameStatus(status) {
+    if (!nameStatusImage) {
+      return;
     }
 
-    function setContentTypeDisplay(contentType) {
-        selectedContentType = contentType;
+    nameStatusImage.src = statusImages[status];
+    nameStatusImage.title = nameStatusTooltips[status];
+    nameStatusImage.setAttribute("aria-label", nameStatusTooltips[status]);
+  }
 
-        if (animationTypeDisplay) {
-            animationTypeDisplay.textContent = contentType === "animation" ? "Animation" : "Static image";
-            animationTypeDisplay.dataset.type = contentType;
-        }
+  function getDatabaseHost() {
+    const savedHost = String(
+      localStorage.getItem("mlcDatabaseHost") || "",
+    ).trim();
+    return savedHost
+      ? savedHost.replace(/^https?:\/\//i, "").replace(/\/+$/, "")
+      : "localhost";
+  }
+
+  function getDatabaseApiUrl() {
+    return `http://${getDatabaseHost()}:3000`;
+  }
+
+  function setContentTypeDisplay(contentType) {
+    selectedContentType = contentType;
+
+    if (animationTypeDisplay) {
+      animationTypeDisplay.textContent =
+        contentType === "animation" ? "Animation" : "Static image";
+      animationTypeDisplay.dataset.type = contentType;
+    }
+  }
+
+  async function checkAnimationName(name) {
+    const response = await fetch(
+      `${getDatabaseApiUrl()}/check-name?name=${encodeURIComponent(name)}`,
+    );
+
+    if (!response.ok) {
+      throw new Error("Failed to check animation name");
     }
 
-    async function checkAnimationName(name) {
-        const response = await fetch(`http://localhost:3000/check-name?name=${encodeURIComponent(name)}`);
+    return response.json();
+  }
 
-        if (!response.ok) {
-            throw new Error("Failed to check animation name");
-        }
+  async function updateNameStatus() {
+    const trimmedName = nameInput.value.trim();
 
-        return response.json();
+    if (!trimmedName) {
+      setNameStatus("empty");
+      return;
     }
 
-    async function updateNameStatus() {
-        const trimmedName = nameInput.value.trim();
+    try {
+      const result = await checkAnimationName(trimmedName);
+      setNameStatus(result.exists ? "exists" : "available");
+    } catch (error) {
+      console.error(error);
+      setNameStatus("empty");
+    }
+  }
 
-        if (!trimmedName) {
-            setNameStatus("empty");
-            return;
-        }
+  function updateFrameStatus() {
+    let normalizedFrameCount = Number(frameCountInput.value);
 
-        try {
-            const result = await checkAnimationName(trimmedName);
-            setNameStatus(result.exists ? "exists" : "available");
-        } catch (error) {
-            console.error(error);
-            setNameStatus("empty");
-        }
+    if (!Number.isFinite(normalizedFrameCount) || normalizedFrameCount < 1) {
+      normalizedFrameCount = 1;
+    } else if (normalizedFrameCount > 15) {
+      normalizedFrameCount = 15;
     }
 
-    function updateFrameStatus() {
-        let normalizedFrameCount = Number(frameCountInput.value);
-
-        if (!Number.isFinite(normalizedFrameCount) || normalizedFrameCount < 1) {
-            normalizedFrameCount = 1;
-        } else if (normalizedFrameCount > 15) {
-            normalizedFrameCount = 15;
-        }
-
-        if (Number(frameCountInput.value) !== normalizedFrameCount) {
-            frameCountInput.value = normalizedFrameCount;
-        }
-
-        if (normalizedFrameCount <= 1) {
-            if (revAniInput) {
-                revAniInput.checked = false;
-                revAniInput.disabled = true;
-            }
-            if (revAniContainer) {
-                revAniContainer.setAttribute("aria-disabled", "true");
-            }
-            setContentTypeDisplay("static image");
-            return;
-        }
-
-        if (revAniInput) {
-            revAniInput.disabled = false;
-        }
-        if (revAniContainer) {
-            revAniContainer.removeAttribute("aria-disabled");
-        }
-        setContentTypeDisplay("animation");
+    if (Number(frameCountInput.value) !== normalizedFrameCount) {
+      frameCountInput.value = normalizedFrameCount;
     }
 
-    nameInput.addEventListener("input", () => {
-        clearTimeout(nameCheckTimeout);
-        nameCheckTimeout = setTimeout(updateNameStatus, 300);
-    });
-
-    frameCountInput.addEventListener("input", updateFrameStatus);
-
-    if (nameStatusImage) {
-        setNameStatus("empty");
+    if (normalizedFrameCount <= 1) {
+      if (revAniInput) {
+        revAniInput.checked = false;
+        revAniInput.disabled = true;
+      }
+      if (revAniContainer) {
+        revAniContainer.setAttribute("aria-disabled", "true");
+      }
+      setContentTypeDisplay("static image");
+      return;
     }
-    updateFrameStatus();
 
-    form.addEventListener("submit", async (e) => {
-        e.preventDefault();
+    if (revAniInput) {
+      revAniInput.disabled = false;
+    }
+    if (revAniContainer) {
+      revAniContainer.removeAttribute("aria-disabled");
+    }
+    setContentTypeDisplay("animation");
+  }
 
-        const name = nameInput.value.trim();
-        const frameCount = frameCountInput.value;
-        const description = descriptionInput ? descriptionInput.value.trim() : "";
-        const reverseAnimation = revAniInput ? revAniInput.checked : false;
+  nameInput.addEventListener("input", () => {
+    clearTimeout(nameCheckTimeout);
+    nameCheckTimeout = setTimeout(updateNameStatus, 300);
+  });
 
-        const payload = {
-            name,
-            type: selectedContentType,
-            frameCount: frameCount || null,
-            reverseAnimation,
-            description: description || null
-        };
+  frameCountInput.addEventListener("input", updateFrameStatus);
 
-        sessionStorage.setItem("mlcPendingAnimation", JSON.stringify(payload));
-        window.location.href = "createAni.html";
-    });
+  if (nameStatusImage) {
+    setNameStatus("empty");
+  }
+  updateFrameStatus();
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const name = nameInput.value.trim();
+    const frameCount = frameCountInput.value;
+    const description = descriptionInput ? descriptionInput.value.trim() : "";
+    const reverseAnimation = revAniInput ? revAniInput.checked : false;
+
+    const payload = {
+      name,
+      type: selectedContentType,
+      frameCount: frameCount || null,
+      reverseAnimation,
+      description: description || null,
+    };
+
+    sessionStorage.setItem("mlcPendingAnimation", JSON.stringify(payload));
+    window.location.href = "createAni.html";
+  });
 }

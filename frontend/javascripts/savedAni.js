@@ -23,7 +23,11 @@ let isPlaying = false;
 function isStaticImageAnimation(animation) {
   if (!animation) return true;
   const type = String(animation.type || "").toLowerCase();
-  return animation.frameCount <= 1 || type.includes("image") || type.includes("static");
+  return (
+    animation.frameCount <= 1 ||
+    type.includes("image") ||
+    type.includes("static")
+  );
 }
 
 function setSpeedWidgetDisabled(disabled) {
@@ -38,14 +42,17 @@ function setSpeedWidgetDisabled(disabled) {
 
 function rgbToHex(rgb) {
   if (!Array.isArray(rgb) || rgb.length !== 3) return "#0f172a";
-  return `#${rgb.map((value) => {
-    const clamped = Math.max(0, Math.min(255, Number(value) || 0));
-    return clamped.toString(16).padStart(2, "0");
-  }).join("")}`;
+  return `#${rgb
+    .map((value) => {
+      const clamped = Math.max(0, Math.min(255, Number(value) || 0));
+      return clamped.toString(16).padStart(2, "0");
+    })
+    .join("")}`;
 }
 
 function normalizePixels(pixels, frameCount) {
-  const targetLength = Math.max(1, Number(frameCount) || 1) * SAVED_FRAME_PIXELS;
+  const targetLength =
+    Math.max(1, Number(frameCount) || 1) * SAVED_FRAME_PIXELS;
   const output = Array.from({ length: targetLength }, () => [0, 0, 0]);
   if (!Array.isArray(pixels)) return output;
 
@@ -70,7 +77,10 @@ function paintGrid(gridEl, framePixels) {
     gridEl.innerHTML = "";
     for (let i = 0; i < SAVED_FRAME_PIXELS; i++) {
       const cell = document.createElement("div");
-      cell.className = gridEl === selectedPreviewGrid ? "selected-preview-cell" : "ani-card-cell";
+      cell.className =
+        gridEl === selectedPreviewGrid
+          ? "selected-preview-cell"
+          : "ani-card-cell";
       gridEl.appendChild(cell);
     }
   }
@@ -98,7 +108,10 @@ function renderCards() {
     card.className = "ani-card";
     card.type = "button";
     card.setAttribute("role", "option");
-    card.setAttribute("aria-selected", index === selectedIndex ? "true" : "false");
+    card.setAttribute(
+      "aria-selected",
+      index === selectedIndex ? "true" : "false",
+    );
 
     const title = document.createElement("p");
     title.className = "ani-card-title";
@@ -147,7 +160,11 @@ function startPlayback() {
 
 function selectAnimation(index) {
   const previouslySelected = animations[selectedIndex];
-  if (isPlaying && previouslySelected && typeof window.sendHaltAnimation === "function") {
+  if (
+    isPlaying &&
+    previouslySelected &&
+    typeof window.sendHaltAnimation === "function"
+  ) {
     window.sendHaltAnimation();
   }
 
@@ -161,12 +178,16 @@ function selectAnimation(index) {
   if (infoName) infoName.textContent = animation.name || "Unnamed animation";
   if (infoFrames) infoFrames.textContent = String(animation.frameCount);
   if (infoType) infoType.textContent = animation.type || "animation";
-  if (infoReverse) infoReverse.textContent = animation.reverseAnimation ? "Yes" : "No";
+  if (infoReverse)
+    infoReverse.textContent = animation.reverseAnimation ? "Yes" : "No";
   if (infoCreatedAt) {
-    const createdDate = animation.createdAt ? new Date(animation.createdAt) : null;
-    infoCreatedAt.textContent = createdDate && !Number.isNaN(createdDate.getTime())
-      ? createdDate.toLocaleString()
-      : "-";
+    const createdDate = animation.createdAt
+      ? new Date(animation.createdAt)
+      : null;
+    infoCreatedAt.textContent =
+      createdDate && !Number.isNaN(createdDate.getTime())
+        ? createdDate.toLocaleString()
+        : "-";
   }
   if (infoDescription) {
     const rawDescription = (animation.description || "No description").trim();
@@ -184,9 +205,13 @@ function resetInfoPanel() {
   if (infoReverse) infoReverse.textContent = "-";
   if (infoCreatedAt) infoCreatedAt.textContent = "-";
   if (infoDescription) {
-    infoDescription.textContent = "Choose an animation from the database, preview its details, and control how it plays on the matrix.";
+    infoDescription.textContent =
+      "Choose an animation from the database, preview its details, and control how it plays on the matrix.";
   }
-  paintGrid(selectedPreviewGrid, Array.from({ length: SAVED_FRAME_PIXELS }, () => [0, 0, 0]));
+  paintGrid(
+    selectedPreviewGrid,
+    Array.from({ length: SAVED_FRAME_PIXELS }, () => [0, 0, 0]),
+  );
   setSpeedWidgetDisabled(true);
 }
 
@@ -197,7 +222,7 @@ async function loadAnimations() {
   }
 
   try {
-    const response = await fetch("http://localhost:3000/animations");
+    const response = await fetch(`${getDatabaseApiUrl()}/animations`);
     if (!response.ok) throw new Error("Failed to load animations");
     const result = await response.json();
 
@@ -206,7 +231,7 @@ async function loadAnimations() {
       return {
         ...animation,
         frameCount,
-        _pixels: normalizePixels(animation.pixels, frameCount)
+        _pixels: normalizePixels(animation.pixels, frameCount),
       };
     });
 
@@ -253,13 +278,18 @@ deleteAnimationButton?.addEventListener("click", async () => {
     return;
   }
 
-  const confirmed = window.confirm(`Delete animation "${selected.name}" permanently?`);
+  const confirmed = window.confirm(
+    `Delete animation "${selected.name}" permanently?`,
+  );
   if (!confirmed) return;
 
   try {
-    const response = await fetch(`http://localhost:3000/animations/${selected.id}`, {
-      method: "DELETE"
-    });
+    const response = await fetch(
+      `${getDatabaseApiUrl()}/animations/${selected.id}`,
+      {
+        method: "DELETE",
+      },
+    );
 
     if (!response.ok) {
       alert("Could not delete animation.");

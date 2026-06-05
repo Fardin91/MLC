@@ -8,6 +8,8 @@ Matrix Light Control is a web-based interface for creating, saving, previewing, 
 
 This README focuses mainly on launching and understanding the frontend/backend side.
 
+The website is hosted on GitHub Pages at https://fardin91.github.io/MLC/. In the downloaded folder, open CMD and run `node mlc.js` to start only the local database API.
+
 ## Table of Contents
 
 - [Author](#author)
@@ -91,11 +93,9 @@ From the `Code` folder, run:
 node mlc.js
 ```
 
-The launcher will:
+This launcher now starts only the database API at `http://localhost:3000`.
 
-- start the database API at `http://localhost:3000`
-- start the website server at `http://localhost:5500`
-- open `http://localhost:5500/index.html` in the browser
+The website itself is hosted on GitHub Pages at https://fardin91.github.io/MLC/, so you do not need to run a local website server.
 
 To stop the project, press `Ctrl+C` in the terminal running `mlc.js`.
 

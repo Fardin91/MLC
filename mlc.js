@@ -1,35 +1,14 @@
 const { spawn } = require("child_process");
-const http = require("http");
 const fs = require("fs");
+const os = require("os");
 const path = require("path");
 
-const WEB_PORT = 5500;
 const API_PORT = 3000;
-
 const projectDir = __dirname;
-const websiteDir = path.join(projectDir, "frontend");
-const websiteRoot = path.resolve(websiteDir);
 const databaseDir = path.join(projectDir, "backend");
-const indexFile = path.join(websiteDir, "index.html");
 const databaseServer = path.join(databaseDir, "index.js");
-const websiteUrl = `http://localhost:${WEB_PORT}/index.html`;
-
-const contentTypes = {
-  ".css": "text/css",
-  ".gif": "image/gif",
-  ".html": "text/html",
-  ".ico": "image/x-icon",
-  ".jpg": "image/jpeg",
-  ".jpeg": "image/jpeg",
-  ".js": "text/javascript",
-  ".json": "application/json",
-  ".png": "image/png",
-  ".svg": "image/svg+xml",
-  ".txt": "text/plain",
-};
 
 let apiProcess = null;
-let webServer = null;
 let shuttingDown = false;
 
 function log(message = "") {
@@ -40,58 +19,40 @@ function fail(message) {
   console.error(`ERROR: ${message}`);
 }
 
-function openBrowser(url) {
-  const platform = process.platform;
+function getLocalNetworkAddresses() {
+  const interfaces = os.networkInterfaces();
+  const addresses = [];
 
-  if (platform === "win32") {
-    spawn("cmd", ["/c", "start", "", url], { detached: true, stdio: "ignore" }).unref();
-    return;
-  }
-
-  if (platform === "darwin") {
-    spawn("open", [url], { detached: true, stdio: "ignore" }).unref();
-    return;
-  }
-
-  spawn("xdg-open", [url], { detached: true, stdio: "ignore" }).unref();
-}
-
-function safeResolveUrlPath(requestUrl) {
-  const parsedUrl = new URL(requestUrl, `http://localhost:${WEB_PORT}`);
-  const decodedPath = decodeURIComponent(parsedUrl.pathname);
-  const normalizedPath = decodedPath === "/" ? "/index.html" : decodedPath;
-  const filePath = path.resolve(websiteRoot, `.${normalizedPath}`);
-  const relativePath = path.relative(websiteRoot, filePath);
-
-  if (relativePath.startsWith("..") || path.isAbsolute(relativePath)) {
-    return null;
-  }
-
-  return filePath;
-}
-
-function serveStaticFile(req, res) {
-  const filePath = safeResolveUrlPath(req.url);
-
-  if (!filePath) {
-    res.writeHead(403, { "Content-Type": "text/plain" });
-    res.end("Forbidden");
-    return;
-  }
-
-  fs.stat(filePath, (statError, stats) => {
-    if (statError || !stats.isFile()) {
-      res.writeHead(404, { "Content-Type": "text/plain" });
-      res.end("Not found");
+  Object.values(interfaces).forEach((interfaceEntries) => {
+    if (!interfaceEntries) {
       return;
     }
 
-    const extension = path.extname(filePath).toLowerCase();
-    const contentType = contentTypes[extension] || "application/octet-stream";
-
-    res.writeHead(200, { "Content-Type": contentType });
-    fs.createReadStream(filePath).pipe(res);
+    interfaceEntries.forEach((entry) => {
+      if (entry.family === "IPv4" && !entry.internal) {
+        addresses.push(entry.address);
+      }
+    });
   });
+
+  return addresses;
+}
+
+function logApiAddresses() {
+  const localAddresses = getLocalNetworkAddresses();
+
+  log(`Database API listening on http://localhost:${API_PORT}`);
+
+  if (localAddresses.length > 0) {
+    log(
+      "If another device needs to connect, use one of these local IP addresses:",
+    );
+    localAddresses.forEach((address) => log(`  http://${address}:${API_PORT}`));
+  } else {
+    log(
+      "No non-internal network address detected. Use http://localhost:3000 locally.",
+    );
+  }
 }
 
 function startApiServer() {
@@ -111,18 +72,6 @@ function startApiServer() {
   });
 }
 
-function startWebsiteServer() {
-  return new Promise((resolve, reject) => {
-    webServer = http.createServer(serveStaticFile);
-
-    webServer.on("error", reject);
-    webServer.listen(WEB_PORT, () => {
-      log(`Starting website server on http://localhost:${WEB_PORT} ...`);
-      resolve();
-    });
-  });
-}
-
 function shutdown(exitCode = 0) {
   if (shuttingDown) {
     return;
@@ -130,11 +79,7 @@ function shutdown(exitCode = 0) {
 
   shuttingDown = true;
   log();
-  log("Stopping MLC servers...");
-
-  if (webServer) {
-    webServer.close();
-  }
+  log("Stopping MLC database API...");
 
   if (apiProcess && !apiProcess.killed) {
     apiProcess.kill();
@@ -144,14 +89,8 @@ function shutdown(exitCode = 0) {
 }
 
 async function main() {
-  log("Matrix Light Control launcher");
+  log("Matrix Light Control database launcher");
   log();
-
-  if (!fs.existsSync(indexFile)) {
-    fail(`Could not find ${indexFile}`);
-    log("Keep mlc.js inside the Code folder, next to backend and frontend.");
-    return 1;
-  }
 
   if (!fs.existsSync(databaseServer)) {
     fail(`Could not find ${databaseServer}`);
@@ -169,16 +108,12 @@ async function main() {
   process.on("SIGTERM", () => shutdown(0));
 
   startApiServer();
-  await startWebsiteServer();
-
-  setTimeout(() => {
-    log(`Opening ${websiteUrl}`);
-    openBrowser(websiteUrl);
-  }, 1000);
 
   log();
-  log("MLC is running.");
-  log("Press Ctrl+C in this window to stop both servers.");
+  logApiAddresses();
+  log();
+  log("MLC database API is running.");
+  log("Press Ctrl+C in this window to stop the database.");
   return 0;
 }
 
