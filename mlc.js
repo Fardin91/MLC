@@ -10,6 +10,8 @@ const databaseServer = path.join(databaseDir, "index.js");
 
 let apiProcess = null;
 let shuttingDown = false;
+let tunnelProcess = null;
+let tunnelUrl = null;
 
 function log(message = "") {
   console.log(message);
@@ -72,6 +74,49 @@ function startApiServer() {
   });
 }
 
+function startLocalTunnel() {
+  // Attempt to start localtunnel via npx so GitHub Pages (HTTPS) can reach the local API.
+  // This will spawn: `npx localtunnel --port 3000`
+  try {
+    log("Starting LocalTunnel (npx localtunnel --port 3000)...");
+    tunnelProcess = spawn("npx", ["localtunnel", "--port", String(API_PORT)], {
+      cwd: projectDir,
+      shell: process.platform === "win32",
+    });
+
+    tunnelProcess.stdout.on("data", (chunk) => {
+      const text = String(chunk).trim();
+      // localtunnel prints the assigned URL; capture any https://... URL
+      const m = text.match(/https?:\/\/[^\s]+/i);
+      if (m) {
+        tunnelUrl = m[0].replace(/\/+$/, "");
+        log(`LocalTunnel URL: ${tunnelUrl}`);
+      } else {
+        // still log tunnel output for diagnostics
+        log(`[localtunnel] ${text}`);
+      }
+    });
+
+    tunnelProcess.stderr.on("data", (chunk) => {
+      const text = String(chunk).trim();
+      log(`[localtunnel] ERR ${text}`);
+    });
+
+    tunnelProcess.on("error", (err) => {
+      log(`LocalTunnel start failed: ${err.message}`);
+      log("If LocalTunnel is not available, install it or use 'npx localtunnel --port 3000' manually.");
+    });
+
+    tunnelProcess.on("exit", (code, signal) => {
+      if (!shuttingDown) {
+        log(`LocalTunnel exited (code=${code} signal=${signal})`);
+      }
+    });
+  } catch (err) {
+    log(`Could not start LocalTunnel: ${err.message}`);
+  }
+}
+
 function shutdown(exitCode = 0) {
   if (shuttingDown) {
     return;
@@ -83,6 +128,14 @@ function shutdown(exitCode = 0) {
 
   if (apiProcess && !apiProcess.killed) {
     apiProcess.kill();
+  }
+
+  if (tunnelProcess && !tunnelProcess.killed) {
+    try {
+      tunnelProcess.kill();
+    } catch (e) {
+      // ignore
+    }
   }
 
   setTimeout(() => process.exit(exitCode), 300);
@@ -108,6 +161,10 @@ async function main() {
   process.on("SIGTERM", () => shutdown(0));
 
   startApiServer();
+
+  // Start LocalTunnel so remote devices (HTTPS pages) can reach the local API.
+  // This uses `npx localtunnel --port 3000` and prints the HTTPS URL when assigned.
+  startLocalTunnel();
 
   log();
   logApiAddresses();
