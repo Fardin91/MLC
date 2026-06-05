@@ -91,10 +91,8 @@ function verifyTunnelUrl(url) {
 }
 
 function startLocalTunnel() {
-  // Attempt to start localtunnel via npx so GitHub Pages (HTTPS) can reach the local API.
-  // This will spawn: `npx localtunnel --port 3000`
   try {
-    log("Starting LocalTunnel (npx localtunnel --port 3000)...");
+    log("Starting LocalTunnel...");
     tunnelProcess = spawn("npx", ["localtunnel", "--port", String(API_PORT)], {
       cwd: projectDir,
       shell: process.platform === "win32",
@@ -109,18 +107,11 @@ function startLocalTunnel() {
         log(`LocalTunnel URL: ${tunnelUrl}`);
 
         const result = await verifyTunnelUrl(tunnelUrl);
-        if (result.ok) {
-          log(`Verified LocalTunnel API endpoint: ${tunnelUrl}/api/status`);
-        } else {
-          log(
-            `LocalTunnel verification failed: ${result.error || `status=${result.statusCode}`}`,
-          );
-          log(
-            "If the HTTPS tunnel endpoint is not reachable, open the URL in your phone browser or restart mlc.js.",
-          );
+        if (!result.ok) {
+          log(`LocalTunnel verification failed: ${result.error || `status=${result.statusCode}`}`);
         }
       } else {
-        // still log tunnel output for diagnostics
+        // minimal tunnel output
         log(`[localtunnel] ${text}`);
       }
     });
@@ -132,9 +123,6 @@ function startLocalTunnel() {
 
     tunnelProcess.on("error", (err) => {
       log(`LocalTunnel start failed: ${err.message}`);
-      log(
-        "If LocalTunnel is not available, install it or use 'npx localtunnel --port 3000' manually.",
-      );
     });
 
     tunnelProcess.on("exit", (code, signal) => {

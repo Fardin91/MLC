@@ -315,141 +315,74 @@ async function connectDatabaseOnly() {
   setConnectionState(dbCard, "is-checking");
   dbConnected = false;
 
-  const databaseHost = getDatabaseHost();
-  const databaseUrl = getDatabaseApiUrl();
-  const isMixedContent =
-    window.location.protocol === "https:" && databaseUrl.startsWith("http://");
+  const localUrl = "http://localhost:3000";
 
   try {
-      const response = await fetch(
-        `${databaseUrl}/api/status`,
-        getDatabaseFetchOptions(),
-      );
-      dbConnected = response.ok;
-      setConnectionState(dbCard, dbConnected ? "is-connected" : "is-error");
-    if (dbImg) {
-      dbImg.title = dbConnected
-        ? `Database Connected (${databaseHost})`
-        : "Database Not Connected";
+    const response = await fetch(
+      `${localUrl}/api/status`,
+      getDatabaseFetchOptions(),
+    );
+    if (response.ok) {
+      setDatabaseHost("localhost");
+      dbConnected = true;
+      setConnectionState(dbCard, "is-connected");
+      if (dbImg) dbImg.title = "Database Connected (localhost)";
+      applyFeatureAccess();
+      updateDemoAvailability();
+      return;
     }
+  } catch (err) {
+    // fall through to prompt for tunnel
+  }
 
-    if (!dbConnected) {
-      alert(
-        `Could not connect to the database at ${databaseHost}. ` +
-          "If the database should run locally, please start it first. " +
-          "If the database is on another device, paste its IP address.",
-      );
-    }
-  } catch (error) {
-    console.error("Database check failed:", error);
+  // Local failed — ask only for an HTTPS tunnel URL
+  const httpsUrl = window.prompt(
+    "Could not contact local database. If you have an HTTPS tunnel URL (ngrok/localtunnel), paste it now (or Cancel):",
+    "",
+  );
+
+  if (!httpsUrl) {
+    // User cancelled or empty — simple error
     dbConnected = false;
     setConnectionState(dbCard, "is-error");
-    if (dbImg) {
-      dbImg.title = "Database Not Connected";
-    }
+    if (dbImg) dbImg.title = "Database Not Connected";
+    alert("Could not reach database. Start it locally or provide a working tunnel URL.");
+    applyFeatureAccess();
+    updateDemoAvailability();
+    return;
+  }
 
-    if (isMixedContent) {
-      // Offer the user a chance to paste an HTTPS tunnel URL (eg. from ngrok)
-      const info =
-        `This page is loaded over HTTPS, so the browser blocks connections to the local HTTP database API at ${databaseHost}:3000.\n\n` +
-        "Options:\n" +
-        "  1) Serve the website locally over HTTP (open the site using your PC's IP), or\n" +
-        "  2) Create a secure tunnel to the API and paste the https URL below (recommended).\n\n" +
-        "Quick ngrok example (on your PC):\n  ngrok http 3000\n\n" +
-        "If you have an HTTPS URL for the API (for example https://abcd-1234.ngrok.io), paste it now.\n\n";
+  const normalized = String(httpsUrl).trim().replace(/\/+$/, "");
+  if (!/^https:\/\//i.test(normalized)) {
+    alert("Please provide a valid https:// URL.");
+    dbConnected = false;
+    setConnectionState(dbCard, "is-error");
+    applyFeatureAccess();
+    updateDemoAvailability();
+    return;
+  }
 
-      const httpsUrl = window.prompt(
-        info + "Paste the HTTPS URL for the API (or Cancel):",
-        "",
-      );
-      if (httpsUrl && /^https:\/\//i.test(String(httpsUrl).trim())) {
-        const normalized = String(httpsUrl).trim().replace(/\/+$/, "");
-        try {
-          const testResponse = await fetch(
-            `${normalized}/api/status`,
-            getDatabaseFetchOptions(),
-          );
-          if (testResponse.ok) {
-            // Store the full https URL and mark connected
-            setDatabaseHost(normalized);
-            dbConnected = true;
-            setConnectionState(dbCard, "is-connected");
-            if (dbImg) {
-              dbImg.title = `Database Connected (${normalized})`;
-            }
-          } else {
-            throw new Error(`Status returned ${testResponse.status}`);
-          }
-        } catch (err) {
-          console.error("HTTPS DB check failed:", err);
-          alert(
-            `Could not reach the API at the provided HTTPS URL:\n` +
-              `${normalized}/api/status\n\n` +
-              `Error: ${err.message || err}.\n\n` +
-              "If the tunnel URL is correct, open it directly in your phone browser to confirm it resolves.",
-          );
-        }
-      } else {
-        alert(
-          "The page is served over HTTPS and cannot contact a local HTTP API. Use the local site on HTTP or provide an HTTPS API URL (ngrok or similar).",
-        );
-      }
+  try {
+    const testResponse = await fetch(
+      `${normalized}/api/status`,
+      getDatabaseFetchOptions(),
+    );
+    if (testResponse.ok) {
+      setDatabaseHost(normalized);
+      dbConnected = true;
+      setConnectionState(dbCard, "is-connected");
+      if (dbImg) dbImg.title = `Database Connected (${normalized})`;
     } else {
-      const remoteHost = window.prompt(
-        "Database not found. If the database is on another device, paste its IP address here (for example 192.168.1.123). Otherwise leave blank and start the local DB.",
-        databaseHost === "localhost" ? "" : databaseHost,
-      );
-
-      if (remoteHost === null) {
-        alert(
-          "The database is not reachable. Start it first with `node mlc.js` in the project folder. " +
-            "If the database is on another device, run it there and paste its IP address.",
-        );
-      } else {
-        const sanitizedHost = String(remoteHost || "")
-          .trim()
-          .replace(/^https?:\/\//i, "")
-          .replace(/\/+$/, "");
-        if (sanitizedHost) {
-          // Respect host:port if the user pasted it (avoid appending :3000 twice)
-          let remoteUrl;
-          if (/:\d+$/.test(sanitizedHost)) {
-            remoteUrl = `http://${sanitizedHost}/api/status`;
-          } else {
-            remoteUrl = `http://${sanitizedHost}:3000/api/status`;
-          }
-          try {
-            const remoteResponse = await fetch(remoteUrl);
-            if (remoteResponse.ok) {
-              dbConnected = true;
-              setDatabaseHost(sanitizedHost);
-              setConnectionState(dbCard, "is-connected");
-              if (dbImg) {
-                dbImg.title = `Database Connected (${sanitizedHost})`;
-              }
-            } else {
-              throw new Error(`Status returned ${remoteResponse.status}`);
-            }
-          } catch (remoteError) {
-            console.error("Remote database check failed:", remoteError);
-            dbConnected = false;
-            setConnectionState(dbCard, "is-error");
-            if (dbImg) {
-              dbImg.title = "Database Not Connected";
-            }
-            alert(
-              "Could not reach the database at the provided IP address. " +
-                "Make sure the database is running on port 3000 and that the host is reachable.",
-            );
-          }
-        } else {
-          alert(
-            "The database is not reachable. Start it first with `node mlc.js` in the project folder. " +
-              "If the database is on another device, run it there and paste its IP address.",
-          );
-        }
-      }
+      dbConnected = false;
+      setConnectionState(dbCard, "is-error");
+      if (dbImg) dbImg.title = "Database Not Connected";
+      alert("Could not reach database. Start it locally or provide a working tunnel URL.");
     }
+  } catch (err) {
+    dbConnected = false;
+    setConnectionState(dbCard, "is-error");
+    if (dbImg) dbImg.title = "Database Not Connected";
+    alert("Could not reach database. Start it locally or provide a working tunnel URL.");
   }
 
   applyFeatureAccess();
