@@ -285,19 +285,24 @@ async function connectDatabaseOnly() {
   setConnectionState(dbCard, "is-checking");
   dbConnected = false;
 
+  const databaseHost = getDatabaseHost();
+  const databaseUrl = getDatabaseApiUrl();
+  const isMixedContent =
+    window.location.protocol === "https:" && databaseUrl.startsWith("http://");
+
   try {
-    const response = await fetch(`${getDatabaseApiUrl()}/api/status`);
+    const response = await fetch(`${databaseUrl}/api/status`);
     dbConnected = response.ok;
     setConnectionState(dbCard, dbConnected ? "is-connected" : "is-error");
     if (dbImg) {
       dbImg.title = dbConnected
-        ? `Database Connected (${getDatabaseHost()})`
+        ? `Database Connected (${databaseHost})`
         : "Database Not Connected";
     }
 
     if (!dbConnected) {
       alert(
-        "Could not connect to the database at localhost. " +
+        `Could not connect to the database at ${databaseHost}. ` +
           "If the database should run locally, please start it first. " +
           "If the database is on another device, paste its IP address.",
       );
@@ -310,52 +315,59 @@ async function connectDatabaseOnly() {
       dbImg.title = "Database Not Connected";
     }
 
-    const remoteHost = window.prompt(
-      "Database not found on localhost. If the database is on another device, paste its IP address here (for example 192.168.1.123). Otherwise leave blank and start the local DB.",
-      getDatabaseHost() === "localhost" ? "" : getDatabaseHost(),
-    );
-
-    if (remoteHost === null) {
+    if (isMixedContent) {
       alert(
-        "The database is not reachable. Start it first with `node mlc.js` in the project folder. " +
-          "If the database is on another device, run it there and paste its IP address.",
+        `This page is loaded over HTTPS, so the browser blocks connections to the local HTTP database API at ${databaseHost}:3000. ` +
+          "Use the local website on HTTP, or serve the API over HTTPS instead.",
       );
     } else {
-      const sanitizedHost = String(remoteHost || "")
-        .trim()
-        .replace(/^https?:\/\//i, "")
-        .replace(/\/+$/, "");
-      if (sanitizedHost) {
-        const remoteUrl = `http://${sanitizedHost}:3000/api/status`;
-        try {
-          const remoteResponse = await fetch(remoteUrl);
-          if (remoteResponse.ok) {
-            dbConnected = true;
-            setDatabaseHost(sanitizedHost);
-            setConnectionState(dbCard, "is-connected");
-            if (dbImg) {
-              dbImg.title = `Database Connected (${sanitizedHost})`;
-            }
-          } else {
-            throw new Error(`Status returned ${remoteResponse.status}`);
-          }
-        } catch (remoteError) {
-          console.error("Remote database check failed:", remoteError);
-          dbConnected = false;
-          setConnectionState(dbCard, "is-error");
-          if (dbImg) {
-            dbImg.title = "Database Not Connected";
-          }
-          alert(
-            "Could not reach the database at the provided IP address. " +
-              "Make sure the database is running on port 3000 and that the host is reachable.",
-          );
-        }
-      } else {
+      const remoteHost = window.prompt(
+        "Database not found. If the database is on another device, paste its IP address here (for example 192.168.1.123). Otherwise leave blank and start the local DB.",
+        databaseHost === "localhost" ? "" : databaseHost,
+      );
+
+      if (remoteHost === null) {
         alert(
           "The database is not reachable. Start it first with `node mlc.js` in the project folder. " +
             "If the database is on another device, run it there and paste its IP address.",
         );
+      } else {
+        const sanitizedHost = String(remoteHost || "")
+          .trim()
+          .replace(/^https?:\/\//i, "")
+          .replace(/\/+$/, "");
+        if (sanitizedHost) {
+          const remoteUrl = `http://${sanitizedHost}:3000/api/status`;
+          try {
+            const remoteResponse = await fetch(remoteUrl);
+            if (remoteResponse.ok) {
+              dbConnected = true;
+              setDatabaseHost(sanitizedHost);
+              setConnectionState(dbCard, "is-connected");
+              if (dbImg) {
+                dbImg.title = `Database Connected (${sanitizedHost})`;
+              }
+            } else {
+              throw new Error(`Status returned ${remoteResponse.status}`);
+            }
+          } catch (remoteError) {
+            console.error("Remote database check failed:", remoteError);
+            dbConnected = false;
+            setConnectionState(dbCard, "is-error");
+            if (dbImg) {
+              dbImg.title = "Database Not Connected";
+            }
+            alert(
+              "Could not reach the database at the provided IP address. " +
+                "Make sure the database is running on port 3000 and that the host is reachable.",
+            );
+          }
+        } else {
+          alert(
+            "The database is not reachable. Start it first with `node mlc.js` in the project folder. " +
+              "If the database is on another device, run it there and paste its IP address.",
+          );
+        }
       }
     }
   }
