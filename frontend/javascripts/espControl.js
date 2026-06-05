@@ -342,7 +342,10 @@ async function connectDatabaseOnly() {
         "Quick ngrok example (on your PC):\n  ngrok http 3000\n\n" +
         "If you have an HTTPS URL for the API (for example https://abcd-1234.ngrok.io), paste it now.\n\n";
 
-      const httpsUrl = window.prompt(info + "Paste the HTTPS URL for the API (or Cancel):", "");
+      const httpsUrl = window.prompt(
+        info + "Paste the HTTPS URL for the API (or Cancel):",
+        "",
+      );
       if (httpsUrl && /^https:\/\//i.test(String(httpsUrl).trim())) {
         const normalized = String(httpsUrl).trim().replace(/\/+$/, "");
         try {
@@ -361,7 +364,10 @@ async function connectDatabaseOnly() {
         } catch (err) {
           console.error("HTTPS DB check failed:", err);
           alert(
-            "Could not reach the API at the provided HTTPS URL. Make sure the tunnel is running and try again.",
+            `Could not reach the API at the provided HTTPS URL:\n` +
+              `${normalized}/api/status\n\n` +
+              `Error: ${err.message || err}.\n\n` +
+              "If the tunnel URL is correct, open it directly in your phone browser to confirm it resolves.",
           );
         }
       } else {
