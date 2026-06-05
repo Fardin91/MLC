@@ -1,5 +1,6 @@
 const { spawn } = require("child_process");
 const fs = require("fs");
+const https = require("https");
 const os = require("os");
 const path = require("path");
 
@@ -74,6 +75,21 @@ function startApiServer() {
   });
 }
 
+function verifyTunnelUrl(url) {
+  return new Promise((resolve) => {
+    const statusUrl = `${url.replace(/\/+$/, "")}/api/status`;
+    https
+      .get(statusUrl, (res) => {
+        const ok = res.statusCode >= 200 && res.statusCode < 300;
+        res.resume();
+        resolve({ ok, statusCode: res.statusCode });
+      })
+      .on("error", (error) => {
+        resolve({ ok: false, error: error.message });
+      });
+  });
+}
+
 function startLocalTunnel() {
   // Attempt to start localtunnel via npx so GitHub Pages (HTTPS) can reach the local API.
   // This will spawn: `npx localtunnel --port 3000`
@@ -84,13 +100,25 @@ function startLocalTunnel() {
       shell: process.platform === "win32",
     });
 
-    tunnelProcess.stdout.on("data", (chunk) => {
+    tunnelProcess.stdout.on("data", async (chunk) => {
       const text = String(chunk).trim();
       // localtunnel prints the assigned URL; capture any https://... URL
       const m = text.match(/https?:\/\/[^\s]+/i);
       if (m) {
         tunnelUrl = m[0].replace(/\/+$/, "");
         log(`LocalTunnel URL: ${tunnelUrl}`);
+
+        const result = await verifyTunnelUrl(tunnelUrl);
+        if (result.ok) {
+          log(`Verified LocalTunnel API endpoint: ${tunnelUrl}/api/status`);
+        } else {
+          log(
+            `LocalTunnel verification failed: ${result.error || `status=${result.statusCode}`}`,
+          );
+          log(
+            "If the HTTPS tunnel endpoint is not reachable, open the URL in your phone browser or restart mlc.js.",
+          );
+        }
       } else {
         // still log tunnel output for diagnostics
         log(`[localtunnel] ${text}`);
@@ -104,7 +132,9 @@ function startLocalTunnel() {
 
     tunnelProcess.on("error", (err) => {
       log(`LocalTunnel start failed: ${err.message}`);
-      log("If LocalTunnel is not available, install it or use 'npx localtunnel --port 3000' manually.");
+      log(
+        "If LocalTunnel is not available, install it or use 'npx localtunnel --port 3000' manually.",
+      );
     });
 
     tunnelProcess.on("exit", (code, signal) => {
