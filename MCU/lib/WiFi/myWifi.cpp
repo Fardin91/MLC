@@ -1,7 +1,7 @@
 #include "myWifi.h"
 
-const char *ssid = "Fardin'sS24Ultra";
-const char *password = "FatMan91.";
+const char *ssid = "*";
+const char *password = "*";
 WiFiServer server(80);
 
 namespace
