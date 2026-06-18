@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Draw live on the Matrix Light Control grid.">
+    <title>Draw Live | Matrix Light Control</title>
+
+    <link rel="icon" type="image/gif" href="data:,">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Audiowide&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="styles/styles.css">
+    <link rel="stylesheet" href="styles/drawLive.css">
+</head>
+
+<body>
+    <header class="page-header">
+        <a class="home-link" href="index.html">Matrix Light Control</a>
+    </header>
+
+    <main class="draw-page">
+        <section class="draw-shell">
+            <section class="draw-layout">
+                <section class="draw-left-column">
+                    <div class="draw-card tools-card">
+                        <p class="section-label">Tools</p>
+                        <div class="toolbox flex-row">
+                            <button class="btn-edit eraseCell" type="button" data-mode="erase" aria-label="Erase mode">
+                                <img src="images/eraser.png" alt="Erase">
+                            </button>
+
+                            <button class="btn-edit editCell" type="button" data-mode="draw" aria-label="Draw mode">
+                                <img src="images/pencil.png" alt="Draw">
+                            </button>
+
+                            <button class="btn-edit fillCell" type="button" data-mode="fill" aria-label="Fill mode">
+                                <img src="images/fill.png" alt="Fill">
+                            </button>
+
+                            <div class="cp-container">
+                                <input class="color-picker" type="color" aria-label="Choose drawing color">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="draw-card brightness-card">
+                        <p class="section-label">Brightness</p>
+                        <div class="brightness-widget">
+                            <div class="dial-stage">
+                                <div class="volume-control">
+                                    <div class="ticks brightness-ticks"></div>
+                                    <div class="knob">
+                                        <div class="volume-display brightness-display">0</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <input class="slider brightness-range" type="range" min="5" max="100" value="0" step="5">
+                        </div>
+                    </div>
+
+                    <div class="draw-card gemini-card">
+                        <p class="section-label">Gemini [EXPERIMENTAL]</p>
+                        <div class="gemini-panel">
+                            <label class="gemini-label" for="geminiApiKey">Gemini API Key</label>
+                            <input id="geminiApiKey" class="gemini-key-input" type="password"
+                                placeholder="Paste your Gemini API key here">
+                            <label class="gemini-label" for="geminiPrompt">Tell Gemini what to draw</label>
+                            <textarea id="geminiPrompt" class="gemini-input" rows="4"
+                                placeholder="Example: Draw a red heart on black background"></textarea>
+                            <div class="gemini-actions">
+                                <button type="button" class="gemini-ok">OK</button>
+                                <button type="button" class="gemini-send-esp" hidden>Send Frame to ESP32</button>
+                            </div>
+                            <p class="gemini-status" aria-live="polite"></p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="matrix-stage">
+                    <div class="matrix-container">
+                        <div class="matrix-wrapper">
+                            <div class="matrix-grid"></div>
+                        </div>
+                    </div>
+                </section>
+            </section>
+        </section>
+    </main>
+
+    <script src="javascripts/espControl.js"></script>
+    <script src="javascripts/matrixGen.js"></script>
+    <script src="javascripts/brightness.js"></script>
+    <script src="javascripts/gemini.js"></script>
+</body>
+
+</html>

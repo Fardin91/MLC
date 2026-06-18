@@ -1,0 +1,225 @@
+# Matrix Light Control
+
+Matrix Light Control is a web-based interface for creating, saving, previewing, and playing LED matrix animations. The project is split into three main parts:
+
+- `frontend` - static website interface
+- `backend` - Node.js/Express API with SQLite storage
+- `MCU` - ESP32/microcontroller firmware
+
+This README focuses mainly on launching and understanding the frontend/backend side.
+
+The website is hosted on GitHub Pages at https://fardin91.github.io/MLC/. In the downloaded folder, open CMD and run `node mlc.js` to start only the local database API.
+
+## Table of Contents
+
+- [Author](#author)
+- [Project Structure](#project-structure)
+- [Requirements](#requirements)
+- [First-Time Setup](#first-time-setup)
+- [Running Locally](#running-locally)
+- [Website Pages](#website-pages)
+- [Project Organization](#project-organization)
+- [Database API](#database-api)
+- [ESP32 URL](#esp32-url)
+- [SQLite Database](#sqlite-database)
+- [Troubleshooting](#troubleshooting)
+- [Notes](#notes)
+
+## Author
+
+- **Author:** Khondoker Fardin Hoque
+- **Year:** 2026
+- **Project:** Matrix Light Control
+- **Context:** Web Engineering project for controlling, creating, saving, and playing LED matrix animations through a local website, database API, and ESP32 firmware.
+
+## Project Structure
+
+```text
+Code/
+|-- mlc.js
+|-- README.md
+|-- backend/
+|   |-- index.js
+|   |-- database.db
+|   |-- package.json
+|   |-- express/
+|   |   |-- app.js
+|   |   |-- helpers.js
+|   |   `-- routes/
+|   |       |-- animations.js
+|   |       `-- status.js
+|   `-- sequelize/
+|       |-- index.js
+|       |-- extra-setup.js
+|       `-- models/
+|           |-- animation.model.js
+|           `-- status.model.js
+|-- frontend/
+|   |-- index.html
+|   |-- createAniForm.html
+|   |-- createAni.html
+|   |-- savedAni.html
+|   |-- drawLive.html
+|   |-- javascripts/
+|   |-- styles/
+|   `-- images/
+`-- MCU/
+```
+
+## Requirements
+
+- Node.js
+- npm
+- A browser
+- ESP32 device, only needed for live hardware control
+
+## First-Time Setup
+
+From the `Code/backend` folder, install backend dependencies:
+
+```bash
+npm install
+```
+
+This installs packages such as `express`, `cors`, `body-parser`, and `sqlite3`.
+
+## Running Locally
+
+From the `Code` folder, run:
+
+```bash
+node mlc.js
+```
+
+This launcher starts the backend database API on `http://localhost:3000`.
+
+If you need remote HTTPS access (for example to test from a phone or GitHub Pages), create a tunnel and paste the HTTPS URL into the site when prompted. Example:
+
+```bash
+npx localtunnel --port 3000
+```
+
+When the site is using an HTTPS tunnel URL, the ESP32 can now receive that tunnel host and connect using HTTPS automatically. If the tunnel URL does not include a port, the ESP defaults to port `443` for secure connections.
+
+The website itself is hosted on GitHub Pages at https://fardin91.github.io/MLC/, so you do not need to run a local website server.
+
+To stop the project, press `Ctrl+C` in the terminal running `mlc.js`.
+
+## Website Pages
+
+- `frontend/index.html` - homepage and connection controls
+- `frontend/createAniForm.html` - animation setup form
+- `frontend/createAni.html` - frame editor for creating animations
+- `frontend/savedAni.html` - saved animation browser/player
+- `frontend/drawLive.html` - live matrix drawing page
+
+## Project Organization
+
+The frontend is intentionally simple and close to the course example:
+
+- `frontend/*.html` - website pages
+- `frontend/javascripts/` - page behavior and API calls
+- `frontend/styles/` - CSS files
+- `frontend/images/` - image assets
+
+The backend follows the course example structure:
+
+- `backend/index.js` - backend entry point
+- `backend/express/app.js` - Express app setup
+- `backend/express/routes/` - route/controller logic
+- `backend/sequelize/` - database connection and model layer
+- `backend/sequelize/models/` - database access logic
+
+## Database API
+
+The backend runs on `http://localhost:3000`.
+
+Main endpoints:
+
+- `GET /api/status` - check database/API status
+- `GET /api/host-ip` - get host IP for ESP32 communication
+- `GET /check-name?name=...` - check whether an animation name already exists
+- `POST /submit` - save a new animation
+- `GET /animations` - load saved animations
+- `GET /animations/:id` - load one animation
+- `DELETE /animations/:id` - delete an animation
+
+## ESP32 URL
+
+The ESP32 URL is not hard-coded. On the homepage, click the ESP32 connection button and paste the current ESP32 URL, for example:
+
+```text
+http://192.168.1.42
+```
+
+If you paste only the IP address, the website automatically adds `http://`.
+
+The URL is saved in browser `localStorage`, so it is remembered until changed or cleared.
+
+When the database is connected through a tunnel, the site will send the configured database host to the ESP so the ESP can fetch animations from the same working endpoint.
+
+## SQLite Database
+
+The SQLite database file is:
+
+```text
+backend/database.db
+```
+
+The table is created automatically by `backend/sequelize/index.js` if it does not already exist. Missing columns such as `reverseAnimation` and `pixels` are also added automatically.
+
+## Troubleshooting
+
+### `node mlc.js` cannot find the website or database
+
+Make sure `mlc.js` is directly inside the `Code` folder:
+
+```text
+Code/mlc.js
+Code/backend/index.js
+Code/frontend/index.html
+```
+
+### Backend dependencies are missing
+
+Run:
+
+```bash
+cd backend
+npm install
+```
+
+### Port already in use
+
+The project uses:
+
+- website: `5500`
+- database API: `3000`
+
+Close any other app using those ports, then run `node mlc.js` again.
+
+### GitHub Pages website cannot load saved animations
+
+Make sure the backend is running on the same computer as the browser:
+
+```bash
+cd backend
+npm install
+npm start
+```
+
+Then reload the GitHub Pages website.
+
+### ESP32 connection fails
+
+- Check that the ESP32 is powered on.
+- Check that the pasted URL/IP is correct.
+- Make sure the computer and ESP32 are on the same network, or if using GitHub Pages/phone access from another network, use a public HTTPS tunnel URL.
+- Click the ESP32 connection button again and enter the new URL.
+- If the ESP is using a tunnel URL, confirm the startup log shows the host with `:443 (HTTPS)`.
+
+## Notes
+
+- The project is intended for local development/demo usage.
+- The database is a local SQLite file, not a replicated or cloud-hosted database.
+- The launcher is dependency-free and uses Node.js built-in modules for serving the website.
