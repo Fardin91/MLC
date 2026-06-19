@@ -104,7 +104,7 @@ namespace
 
         // parse optional :port
         String hostPart = newHost;
-        uint16_t portPart = dbServerPort;
+        uint16_t portPart = secure ? 443 : DB_SERVER_PORT;
         bool explicitPort = false;
         int colonPos = newHost.lastIndexOf(':');
         if (colonPos > 0)
@@ -132,13 +132,17 @@ namespace
         {
             portPart = 443;
         }
+        else if (!secure && !explicitPort)
+        {
+            portPart = DB_SERVER_PORT;
+        }
 
         if (!looksLikeHost(hostPart))
             return;
 
         hostPart.toCharArray(dbServerHost, DB_HOST_MAX_LEN + 1);
         dbServerPort = portPart;
-        dbServerSecure = secure || (dbServerPort == 443);
+        dbServerSecure = secure;
         matrixPrefs.putString("dbHost", String(dbServerHost));
         matrixPrefs.putUInt("dbPort", dbServerPort);
         matrixPrefs.putBool("dbSecure", dbServerSecure);
