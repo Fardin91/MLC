@@ -194,6 +194,24 @@ async function fetchHostIpForEsp32() {
   return hostIp;
 }
 
+function formatEspDatabaseHost(host) {
+  const normalizedHost = String(host || "").trim();
+
+  if (!normalizedHost) {
+    return "";
+  }
+
+  if (/^https?:\/\//i.test(normalizedHost)) {
+    return normalizedHost.replace(/\/+$/, "");
+  }
+
+  if (normalizedHost.includes(":")) {
+    return normalizedHost;
+  }
+
+  return `http://${normalizedHost}:3000`;
+}
+
 function isLoopbackDatabaseHost(host) {
   const normalizedHost = String(host || "").trim().toLowerCase();
   return (
@@ -321,8 +339,9 @@ function exitDemoMode() {
 async function syncHostIpToEsp() {
   const configuredHost = getDatabaseHost();
   const hostToSend = isLoopbackDatabaseHost(configuredHost)
-    ? await fetchHostIpForEsp32()
-    : configuredHost;
+    ? formatEspDatabaseHost(await fetchHostIpForEsp32())
+    : formatEspDatabaseHost(configuredHost);
+
   await sendHostIpToEsp32(hostToSend);
   hostIpSynced = true;
   if (espImg) {
