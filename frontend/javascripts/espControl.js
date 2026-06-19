@@ -301,12 +301,7 @@ function exitDemoMode() {
 }
 
 async function syncHostIpToEsp() {
-  // Prefer the configured database host (could be a tunnel URL). Fall back
-  // to asking the backend for a LAN IP when no host is stored.
-  let hostToSend = (localStorage.getItem(DB_HOST_STORAGE_KEY) || "").trim();
-  if (!hostToSend) {
-    hostToSend = await fetchHostIpForEsp32();
-  }
+  const hostToSend = await fetchHostIpForEsp32();
   await sendHostIpToEsp32(hostToSend);
   hostIpSynced = true;
   if (espImg) {
