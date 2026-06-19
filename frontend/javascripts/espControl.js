@@ -194,6 +194,24 @@ async function fetchHostIpForEsp32() {
   return hostIp;
 }
 
+function isLoopbackDatabaseHost(host) {
+  const normalizedHost = String(host || "").trim().toLowerCase();
+  return (
+    normalizedHost === "localhost" ||
+    normalizedHost === "127.0.0.1" ||
+    normalizedHost === "http://localhost" ||
+    normalizedHost === "https://localhost" ||
+    normalizedHost === "http://127.0.0.1" ||
+    normalizedHost === "https://127.0.0.1" ||
+    normalizedHost.startsWith("localhost:") ||
+    normalizedHost.startsWith("127.0.0.1:") ||
+    normalizedHost.startsWith("http://localhost:") ||
+    normalizedHost.startsWith("https://localhost:") ||
+    normalizedHost.startsWith("http://127.0.0.1:") ||
+    normalizedHost.startsWith("https://127.0.0.1:")
+  );
+}
+
 let isDemoMode = false;
 let dbConnected = false;
 let espConnected = false;
@@ -301,7 +319,10 @@ function exitDemoMode() {
 }
 
 async function syncHostIpToEsp() {
-  const hostToSend = await fetchHostIpForEsp32();
+  const configuredHost = getDatabaseHost();
+  const hostToSend = isLoopbackDatabaseHost(configuredHost)
+    ? await fetchHostIpForEsp32()
+    : configuredHost;
   await sendHostIpToEsp32(hostToSend);
   hostIpSynced = true;
   if (espImg) {
