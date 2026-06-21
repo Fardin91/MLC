@@ -1,4 +1,4 @@
-const GEMINI_MODEL = "gemini-2.5-pro";
+const GEMINI_MODEL = "gemini-3.1-flash-lite";
 const MATRIX_PIXELS = 256;
 const SEND_DELAY_MS = 30;
 
