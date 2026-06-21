@@ -1,4 +1,4 @@
-const GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_MODEL = "gemini-3.5-flash";
 const MATRIX_PIXELS = 256;
 const SEND_DELAY_MS = 30;
 
